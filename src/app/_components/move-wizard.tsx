@@ -2008,6 +2008,32 @@ function MoveWizardModal({
     const autoTableModule = await import("jspdf-autotable");
     const autoTable = autoTableModule.default;
 
+    function applyKamWatermark(doc: InstanceType<typeof jsPDF>, text = "KAM") {
+      const pageCount = doc.getNumberOfPages();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      for (let pageIndex = 1; pageIndex <= pageCount; pageIndex += 1) {
+        doc.setPage(pageIndex);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(64);
+        doc.setTextColor(230, 230, 230);
+
+        const stepX = 70;
+        const stepY = 55;
+        for (let y = -20; y < pageHeight + 40; y += stepY) {
+          for (let x = -30; x < pageWidth + 40; x += stepX) {
+            (doc as unknown as { text: (t: string, x: number, y: number, opts?: Record<string, unknown>) => void }).text(
+              text,
+              x,
+              y,
+              { angle: 35, align: "center" },
+            );
+          }
+        }
+      }
+    }
+
     const companyResponse = await fetch("/api/settings/company", { cache: "no-store" });
     const companyPayload = await readJsonResponseOrThrow<{ organization?: Record<string, unknown> }>(companyResponse);
     const organization = companyPayload.organization ?? {};
@@ -2517,6 +2543,10 @@ function MoveWizardModal({
     const offerPdf = buildOfferPdf("Angebot");
     const invoicePdf = buildOfferPdf("Rechnung");
     const checklistPdf = buildChecklistPdf();
+
+    applyKamWatermark(offerPdf);
+    applyKamWatermark(invoicePdf);
+    applyKamWatermark(checklistPdf);
 
     const files = [
       { label: "Angebot", fileName: `Angebot-${move.moveNumber}.pdf`, blob: offerPdf.output("blob") as Blob },

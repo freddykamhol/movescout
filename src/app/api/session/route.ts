@@ -9,6 +9,40 @@ export const runtime = "nodejs";
 
 const userCookieName = "movescout_user";
 
+async function ensureDefaultAdmin(prisma: NonNullable<ReturnType<typeof getPrismaClient>>, orgKey: string) {
+  const existingAny = await prisma.user.findFirst({ where: { orgKey } });
+  if (!existingAny) {
+    await prisma.user.create({
+      data: {
+        displayName: "Administrator",
+        username: "Admin",
+        passwordHash: await bcrypt.hash("Admin123", 10),
+        orgKey,
+        role: "OWNER",
+      },
+    });
+    return;
+  }
+
+  const adminUser = await prisma.user.findFirst({
+    where: { orgKey, username: { equals: "Admin", mode: "insensitive" } },
+  });
+
+  if (!adminUser?.passwordHash) {
+    return;
+  }
+
+  const matchesLegacy = await bcrypt.compare("Admin", adminUser.passwordHash);
+  if (!matchesLegacy) {
+    return;
+  }
+
+  await prisma.user.update({
+    where: { id: adminUser.id },
+    data: { username: "Admin", passwordHash: await bcrypt.hash("Admin123", 10) },
+  });
+}
+
 function parseCookieHeader(cookieHeader: string | null) {
   if (!cookieHeader) {
     return new Map<string, string>();
@@ -41,6 +75,7 @@ export async function GET(request: Request) {
 
   const orgKey = getOrgKeyFromRequest(request);
   const organization = await ensureOrganization(orgKey);
+  await ensureDefaultAdmin(prisma, orgKey);
 
   if (!organization) {
     return NextResponse.json({ message: "Organisation konnte nicht initialisiert werden." }, { status: 500 });
@@ -49,38 +84,22 @@ export async function GET(request: Request) {
   const cookies = parseCookieHeader(request.headers.get("cookie"));
   const preferredUserId = cookies.get(userCookieName)?.trim() || null;
 
-  let currentUser =
-    preferredUserId
-      ? await prisma.user.findFirst({
-          where: {
-            id: preferredUserId,
-            orgKey,
-          },
-        })
-      : null;
-
-  if (!currentUser) {
-    currentUser = await prisma.user.findFirst({
-      where: {
-        orgKey,
-      },
-      orderBy: [{ role: "asc" }, { createdAt: "asc" }],
-    });
+  if (!preferredUserId) {
+    return NextResponse.json({ message: "Nicht eingeloggt." }, { status: 401 });
   }
 
+  const currentUser = await prisma.user.findFirst({
+    where: {
+      id: preferredUserId,
+      orgKey,
+    },
+  });
+
   if (!currentUser) {
-    currentUser = await prisma.user.create({
-      data: {
-        displayName: "Administrator",
-        username: "admin",
-        passwordHash: await bcrypt.hash("Admin", 10),
-        orgKey,
-        role: "OWNER",
-      },
-    });
+    return NextResponse.json({ message: "Nicht eingeloggt." }, { status: 401 });
   }
 
-  const response = NextResponse.json({
+  return NextResponse.json({
     organization: {
       orgKey: organization.orgKey,
       name: organization.name,
@@ -92,13 +111,4 @@ export async function GET(request: Request) {
       role: currentUser.role,
     },
   });
-
-  response.headers.append(
-    "Set-Cookie",
-    `${userCookieName}=${encodeURIComponent(currentUser.id)}; Path=/; SameSite=Lax; Max-Age=${60 * 60 * 24 * 365}; HttpOnly${
-      process.env.NODE_ENV === "production" ? "; Secure" : ""
-    }`,
-  );
-
-  return response;
 }

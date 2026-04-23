@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { MoveWizardProvider } from "@/app/_components/move-wizard";
@@ -200,6 +200,7 @@ function hasAppSidebar(pathname: string) {
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [lightMode, setLightMode] = useState(false);
@@ -230,6 +231,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
     async function loadSession() {
       try {
         const response = await fetch("/api/session", { cache: "no-store" });
+        if (response.status === 401) {
+          if (!aborted && pathname !== "/login") {
+            router.push(`/login?next=${encodeURIComponent(pathname)}`);
+            router.refresh();
+          }
+          return;
+        }
         const payload = (await response.json()) as {
           organization?: { name: string; orgKey: string };
           user?: { displayName: string; role: string };
@@ -248,7 +256,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           setSessionOrg(payload.organization);
         }
       } catch {
-        // Session-Daten sind optional solange Login noch nicht aktiv ist.
+        // ignore
       }
     }
 
@@ -257,7 +265,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     return () => {
       aborted = true;
     };
-  }, []);
+  }, [pathname, router]);
 
   const displayName = sessionUser?.displayName?.trim() ?? "";
   const userInitials = (() => {
@@ -293,6 +301,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <DashboardAppearanceContext.Provider value={appearanceValue}>
       <MoveWizardProvider lightMode={lightMode}>
+        <div className="sticky top-0 z-50 w-full">
+          <div className="mx-auto flex max-w-6xl items-center justify-center bg-[#FF007F] px-3 py-2 text-center text-xs font-semibold tracking-[0.22em] text-white">
+            KEIN PRODUKTIVSYSTEM!
+          </div>
+        </div>
         {showSidebar ? (
           <main
             className={`min-h-screen w-full p-3 md:p-4 ${

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { useDashboardAppearance } from "@/app/_components/app-shell";
@@ -8,10 +9,11 @@ import { getPageChrome } from "@/app/_components/page-styles";
 
 export default function LoginPageClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { lightMode } = useDashboardAppearance();
   const chrome = getPageChrome(lightMode);
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("Admin");
+  const [username, setUsername] = useState("Admin");
+  const [password, setPassword] = useState("Admin123");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [resetIdentifier, setResetIdentifier] = useState("");
@@ -31,7 +33,8 @@ export default function LoginPageClient() {
       if (!response.ok) {
         throw new Error(payload.message ?? "Login fehlgeschlagen.");
       }
-      router.push("/dashboard");
+      const nextPath = searchParams.get("next")?.trim();
+      router.push(nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard");
       router.refresh();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Login fehlgeschlagen.");
@@ -45,7 +48,7 @@ export default function LoginPageClient() {
       <header className={chrome.hero}>
         <p className={chrome.heroEyebrow}>Zugang</p>
         <h1 className={chrome.heroTitle}>Login</h1>
-        <p className={chrome.heroText}>Standard-Login: Benutzername Admin / Passwort Admin.</p>
+        <p className={chrome.heroText}>Standard-Login: Benutzername Admin / Passwort Admin123 (gültig 1 Tag).</p>
       </header>
 
       <section className={`${chrome.panel} max-w-xl`}>

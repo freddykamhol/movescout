@@ -13,6 +13,41 @@ type LoginPayload = {
 };
 
 const userCookieName = "movescout_user";
+const sessionMaxAgeSeconds = 60 * 60 * 24;
+
+async function ensureDefaultAdmin(prisma: NonNullable<ReturnType<typeof getPrismaClient>>, orgKey: string) {
+  const existingAny = await prisma.user.findFirst({ where: { orgKey } });
+  if (!existingAny) {
+    await prisma.user.create({
+      data: {
+        displayName: "Administrator",
+        username: "Admin",
+        passwordHash: await bcrypt.hash("Admin123", 10),
+        orgKey,
+        role: "OWNER",
+      },
+    });
+    return;
+  }
+
+  const adminUser = await prisma.user.findFirst({
+    where: { orgKey, username: { equals: "Admin", mode: "insensitive" } },
+  });
+
+  if (!adminUser?.passwordHash) {
+    return;
+  }
+
+  const matchesLegacy = await bcrypt.compare("Admin", adminUser.passwordHash);
+  if (!matchesLegacy) {
+    return;
+  }
+
+  await prisma.user.update({
+    where: { id: adminUser.id },
+    data: { username: "Admin", passwordHash: await bcrypt.hash("Admin123", 10) },
+  });
+}
 
 export async function POST(request: Request) {
   const prisma = getPrismaClient();
@@ -22,6 +57,7 @@ export async function POST(request: Request) {
 
   const orgKey = getOrgKeyFromRequest(request);
   await ensureOrganization(orgKey);
+  await ensureDefaultAdmin(prisma, orgKey);
 
   let payload: LoginPayload;
   try {
@@ -38,7 +74,7 @@ export async function POST(request: Request) {
   }
 
   const user = await prisma.user.findFirst({
-    where: { orgKey, username },
+    where: { orgKey, username: { equals: username, mode: "insensitive" } },
   });
 
   if (!user?.passwordHash) {
@@ -63,9 +99,8 @@ export async function POST(request: Request) {
   const secure = process.env.NODE_ENV === "production";
   response.headers.append(
     "Set-Cookie",
-    `${userCookieName}=${encodeURIComponent(user.id)}; Path=/; SameSite=Lax; Max-Age=${60 * 60 * 24 * 365}; HttpOnly${secure ? "; Secure" : ""}`,
+    `${userCookieName}=${encodeURIComponent(user.id)}; Path=/; SameSite=Lax; Max-Age=${sessionMaxAgeSeconds}; HttpOnly${secure ? "; Secure" : ""}`,
   );
 
   return response;
 }
-
