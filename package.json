@@ -9,6 +9,7 @@
   "scripts": {
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
+    "db:push": "prisma db push",
     "dev": "next dev -p 4000",
     "build": "next build --webpack",
     "start": "NODE_ENV=production node server.js",
