@@ -4,7 +4,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ### Requirements
 
-- Node.js `20.20.1` (see `.node-version` / `.nvmrc`)
+- Node.js `20.20.1+` (see `.node-version` / `.nvmrc`)
 - npm `10.x`
 
 First, run the development server:
