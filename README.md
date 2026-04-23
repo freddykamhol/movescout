@@ -2,9 +2,15 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Requirements
+
+- Node.js `20.20.1` (see `.node-version` / `.nvmrc`)
+- npm `10.x`
+
 First, run the development server:
 
 ```bash
+npm ci
 npm run dev
 # or
 yarn dev
