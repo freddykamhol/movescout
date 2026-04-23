@@ -29,7 +29,8 @@ Note: This project is configured to run on port `4000` (see `server.js` / `packa
 If you see a blank page (HTTP 200 with empty body), the webserver is usually not reaching the Next.js process.
 
 - Ensure your domain (`movescout.de` + `www`) uses its own vhost + correct TLS cert.
-- Ensure the reverse proxy points to `127.0.0.1:4000` and the app root is the folder that contains `package.json`.
+- Ensure the app root is the folder that contains `package.json` (and `prisma/schema.prisma`).
+- If you run via Plesk Node.js (Passenger), the app must listen on the port provided by `PORT` (this project supports `PORT`, fallback `4000`).
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

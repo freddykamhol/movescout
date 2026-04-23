@@ -3,8 +3,8 @@
 const http = require("http");
 const next = require("next");
 
-const hostname = "0.0.0.0";
-const port = 4000;
+const hostname = process.env.HOSTNAME || "0.0.0.0";
+const port = Number.parseInt(process.env.PORT || "4000", 10);
 const dev = process.env.NODE_ENV !== "production";
 
 const app = next({ dev, hostname, port });
