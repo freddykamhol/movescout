@@ -16,9 +16,9 @@
     "sftp:sync": "node scripts/sftp-sync.mjs"
   },
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.4.2",
-    "@prisma/adapter-pg": "^7.4.2",
-    "@prisma/client": "^7.4.2",
+    "@prisma/adapter-better-sqlite3": "7.4.2",
+    "@prisma/adapter-pg": "7.4.2",
+    "@prisma/client": "7.4.2",
     "archiver": "^7.0.1",
     "archiver-zip-encrypted": "^2.0.0",
     "bcryptjs": "^3.0.3",
@@ -31,7 +31,7 @@
     "next": "^16.1.6",
     "nodemailer": "^8.0.1",
     "pg": "^8.19.0",
-    "prisma": "^7.4.2",
+    "prisma": "7.4.2",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "ssh2-sftp-client": "^11.0.0"
