@@ -1,0 +1,19 @@
+Möbelstück-Name;Kategorie;L;B;H;StandardRaum;Raum
+Bett 90x200;bed;200;90;60;Schlafzimmer,Gästezimmer,Kinderzimmer;Schlafzimmer,Gästezimmer,Kinderzimmer
+Kleiderschrank;cabinet;180;60;220;Schlafzimmer,Gästezimmer;Schlafzimmer,Gästezimmer
+Nachttisch;table;50;40;55;Schlafzimmer,Gästezimmer;Schlafzimmer,Gästezimmer
+Kommode;dresser;100;45;90;Schlafzimmer,Wohnzimmer,Kinderzimmer;Schlafzimmer,Wohnzimmer,Kinderzimmer
+Sofa 3-Sitzer;seating;220;95;85;Wohnzimmer;Wohnzimmer
+Couchtisch;table;120;60;45;Wohnzimmer;Wohnzimmer
+TV-Lowboard;cabinet;160;45;55;Wohnzimmer;Wohnzimmer
+Esstisch;table;180;90;76;Wohnzimmer,Küche;Wohnzimmer,Küche
+Stuhl;seating;45;45;90;Wohnzimmer,Küche;Wohnzimmer,Küche
+Kühlschrank;appliance;60;65;200;Küche;Küche
+Küchenhochschrank;cabinet;60;60;200;Küche;Küche
+Waschmaschine;appliance;60;60;85;Badezimmer,Keller;Badezimmer,Keller
+Badezimmerschrank;cabinet;80;35;190;Badezimmer;Badezimmer
+Regal;shelving;80;35;180;Wohnzimmer,Keller,Dachboden,Garage;Wohnzimmer,Keller,Dachboden,Garage
+Gefrierschrank;appliance;70;70;180;Keller,Garage;Keller,Garage
+Werkbank;workshop;150;70;90;Garage;Garage
+Fahrrad;vehicle;180;60;110;Keller,Garage;Keller,Garage
+Umzugskarton Standard;box;60;40;40;Keller,Dachboden,Garage;Keller,Dachboden,Garage

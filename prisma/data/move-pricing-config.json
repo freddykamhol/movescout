@@ -1,0 +1,14 @@
+{
+  "assemblyPricePerItem": 40,
+  "disassemblyPricePerItem": 40,
+  "disposalPricePerCubicMeter": 35,
+  "elevatorFlatFee": 10,
+  "freeWalkingDistanceMeters": 10,
+  "floorPricePerLevel": 10,
+  "furnitureCubicMeterDecimalPrice": 30,
+  "furnitureCubicMeterFullPrice": 60,
+  "noParkingZoneFlatFee": 200,
+  "pricePerKilometer": 3,
+  "walkingDistanceStepMeters": 10,
+  "walkingDistanceStepPrice": 20
+}

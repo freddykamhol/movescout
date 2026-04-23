@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DocumentCategory {
+  CONTRACT
+  OFFER
+  CHECKLIST
+  INVOICE
+  OTHER
+}
+
+enum MoveStatus {
+  LEAD
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model Organization {
+  orgKey         String          @id
+  name           String
+  legalName      String?
+  vatId          String?
+  taxNumber      String?
+  logoPath       String?
+  isSmallBusiness Boolean        @default(false)
+  vatRatePercent  Int            @default(19)
+  street         String?
+  postalCode     String?
+  city           String?
+  country        String?
+  phone          String?
+  email          String?
+  website        String?
+  bankName       String?
+  iban           String?
+  bic            String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  users          User[]
+  orgChartNodes  OrgChartNode[]
+  integrationSettings IntegrationSettings?
+  customers      Customer[]
+  moves          Move[]
+  documents      CustomerDocument[]
+  furnitureItems FurnitureItem[]
+}
+
+model IntegrationSettings {
+  orgKey        String   @id
+  smtpHost      String?
+  smtpPort      Int?
+  smtpUser      String?
+  smtpPassEnc   String?
+  smtpSecure    Boolean  @default(false)
+  mailFrom      String?
+
+  smtpHostEnc   String?
+  smtpPortEnc   String?
+  smtpUserEnc   String?
+  smtpSecureEnc String?
+  mailFromEnc   String?
+
+  sftpHost            String?
+  sftpPort            Int      @default(22)
+  sftpUser            String?
+  sftpPassEnc         String?
+  sftpPrivateKeyEnc   String?
+  sftpRemoteRoot      String?  @default("/movescout/documents")
+
+  sftpHostEnc       String?
+  sftpPortEnc       String?
+  sftpUserEnc       String?
+  sftpRemoteRootEnc String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgKey], references: [orgKey], onDelete: Cascade)
+
+  @@index([smtpHost])
+  @@index([sftpHost])
+}
+
+model User {
+  id          String       @id @default(cuid())
+  orgKey      String       @default("org_default")
+  username    String?
+  passwordHash String?
+  email       String?
+  firstName   String?
+  lastName    String?
+  displayName String
+  role        UserRole     @default(MEMBER)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  organization Organization @relation(fields: [orgKey], references: [orgKey], onDelete: Cascade)
+
+  @@index([orgKey, role])
+  @@index([orgKey, email])
+  @@unique([orgKey, username])
+}
+
+model OrgChartNode {
+  id        String        @id @default(cuid())
+  orgKey    String        @default("org_default")
+  name      String
+  title     String?
+  email     String?
+  phone     String?
+  parentId  String?
+  sortOrder Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  organization Organization  @relation(fields: [orgKey], references: [orgKey], onDelete: Cascade)
+  parent       OrgChartNode? @relation("OrgChartNodeHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children     OrgChartNode[] @relation("OrgChartNodeHierarchy")
+
+  @@index([orgKey, parentId, sortOrder])
+}
+
+model Customer {
+  id             String             @id @default(cuid())
+  orgKey         String             @default("org_default")
+  customerNumber String             @unique
+  company        String?
+  firstName      String
+  lastName       String
+  address        String
+  postalCode     String
+  city           String
+  phone          String
+  email          String
+  notes          String?
+  emailHash      String?
+  companyLocationHash String?
+  personLocationHash  String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  documents      CustomerDocument[]
+  moves          Move[]
+
+  organization Organization @relation(fields: [orgKey], references: [orgKey], onDelete: Cascade)
+
+  @@index([orgKey])
+  @@index([company])
+  @@index([lastName, firstName])
+  @@index([city])
+  @@index([email])
+  @@index([orgKey, emailHash])
+  @@index([orgKey, companyLocationHash])
+  @@index([orgKey, personLocationHash])
+}
+
+model CustomerDocument {
+  id         String           @id @default(cuid())
+  orgKey     String           @default("org_default")
+  customerId String
+  title      String
+  category   DocumentCategory @default(OTHER)
+  fileName   String?
+  fileUrl    String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgKey], references: [orgKey], onDelete: Cascade)
+
+  @@index([orgKey])
+  @@index([customerId, updatedAt])
+}
+
+model Move {
+  id                 String     @id @default(cuid())
+  orgKey             String     @default("org_default")
+  moveNumber         String     @unique
+  customerId         String
+  originAddress      String?
+  destinationAddress String?
+  plannedDate        DateTime?
+  plannedEndDate     DateTime?
+  status             MoveStatus @default(LEAD)
+  wizardData         Json?
+  pricingSummary     Json?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgKey], references: [orgKey], onDelete: Cascade)
+
+  @@index([orgKey])
+  @@index([customerId, plannedDate])
+  @@index([status])
+}
+
+model FurnitureItem {
+  id            String   @id @default(cuid())
+  orgKey        String   @default("org_default")
+  furnitureName String
+  lengthCm      Float
+  widthCm       Float
+  heightCm      Float
+  standardRooms String[] @default([])
+  rooms         String[] @default([])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgKey], references: [orgKey], onDelete: Cascade)
+
+  @@index([orgKey])
+  @@index([furnitureName])
+}
