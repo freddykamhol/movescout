@@ -9,9 +9,9 @@
   "scripts": {
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
-    "dev": "next dev",
+    "dev": "next dev -p 4000",
     "build": "next build --webpack",
-    "start": "next start",
+    "start": "NODE_ENV=production node server.js",
     "lint": "eslint",
     "sftp:sync": "node scripts/sftp-sync.mjs"
   },
