@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 
+require("dotenv/config");
+
 const http = require("http");
 const next = require("next");
 

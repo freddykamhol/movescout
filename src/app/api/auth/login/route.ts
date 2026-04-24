@@ -15,14 +15,22 @@ type LoginPayload = {
 const userCookieName = "movescout_user";
 const sessionMaxAgeSeconds = 60 * 60 * 24;
 
+function getBootstrapAdminCredentials() {
+  return {
+    username: (process.env.MOVESCOUT_BOOTSTRAP_ADMIN_USERNAME?.trim() || "Admin").trim(),
+    password: process.env.MOVESCOUT_BOOTSTRAP_ADMIN_PASSWORD?.trim() || "Admin123",
+  };
+}
+
 async function ensureDefaultAdmin(prisma: NonNullable<ReturnType<typeof getPrismaClient>>, orgKey: string) {
+  const bootstrap = getBootstrapAdminCredentials();
   const existingAny = await prisma.user.findFirst({ where: { orgKey } });
   if (!existingAny) {
     await prisma.user.create({
       data: {
         displayName: "Administrator",
-        username: "Admin",
-        passwordHash: await bcrypt.hash("Admin123", 10),
+        username: bootstrap.username,
+        passwordHash: await bcrypt.hash(bootstrap.password, 10),
         orgKey,
         role: "OWNER",
       },
@@ -31,21 +39,25 @@ async function ensureDefaultAdmin(prisma: NonNullable<ReturnType<typeof getPrism
   }
 
   const adminUser = await prisma.user.findFirst({
-    where: { orgKey, username: { equals: "Admin", mode: "insensitive" } },
+    where: { orgKey, username: { equals: bootstrap.username, mode: "insensitive" } },
   });
 
   if (!adminUser?.passwordHash) {
     return;
   }
 
-  const matchesLegacy = await bcrypt.compare("Admin", adminUser.passwordHash);
+  const matchesLegacy =
+    (await bcrypt.compare("Admin", adminUser.passwordHash)) ||
+    (await bcrypt.compare("Admin123", adminUser.passwordHash)) ||
+    (bootstrap.password !== "Admin" && (await bcrypt.compare(bootstrap.password, adminUser.passwordHash)));
+
   if (!matchesLegacy) {
     return;
   }
 
   await prisma.user.update({
     where: { id: adminUser.id },
-    data: { username: "Admin", passwordHash: await bcrypt.hash("Admin123", 10) },
+    data: { username: bootstrap.username, passwordHash: await bcrypt.hash(bootstrap.password, 10) },
   });
 }
 
