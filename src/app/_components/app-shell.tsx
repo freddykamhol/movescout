@@ -302,7 +302,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     <DashboardAppearanceContext.Provider value={appearanceValue}>
       <MoveWizardProvider lightMode={lightMode}>
         <div className="sticky top-0 z-50 w-full">
-          <div className="mx-auto flex max-w-6xl items-center justify-center bg-[#FF007F] px-3 py-2 text-center text-xs font-semibold tracking-[0.22em] text-white">
+          <div className="flex w-full items-center justify-center bg-[#FF007F] px-3 py-2 text-center text-xs font-semibold tracking-[0.22em] text-white">
             KEIN PRODUKTIVSYSTEM!
           </div>
         </div>
