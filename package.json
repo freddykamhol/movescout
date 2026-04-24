@@ -10,7 +10,7 @@
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "db:push": "prisma db push",
-    "env:check": "node -e \"const keys=['DATABASE_URL','PRISMA_DATABASE_URL','POSTGRES_URL','POSTGRESQL_URL','PORT','NODE_ENV']; console.log('cwd',process.cwd()); for (const k of keys){const v=process.env[k]; console.log(k, v?('[set] '+String(v).slice(0,60)+(String(v).length>60?'…':'')):'[missing]');}\"",
+    "env:check": "node -e \"const keys=['DATABASE_URL','PRISMA_DATABASE_URL','POSTGRES_URL','POSTGRESQL_URL','PORT','NODE_ENV']; const mask=(v)=>{const s=String(v||''); if(!s) return s; if(s.startsWith('postgresql://')||s.startsWith('postgres://')||s.startsWith('mysql://')) return s.replace(/:(?:[^@]*)@/,':***@'); return s.length>6 ? s.slice(0,3)+'***'+s.slice(-2) : '***';}; console.log('cwd',process.cwd()); for (const k of keys){const v=process.env[k]; console.log(k, v?('[set] '+mask(v)):'[missing]');}\"",
     "dev": "next dev -p 4000",
     "build": "next build --webpack",
     "start": "NODE_ENV=production node server.js",
