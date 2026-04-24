@@ -15,7 +15,9 @@ const globalForPrisma = globalThis as typeof globalThis & {
 const prismaClientSignature = "movescout-prisma-schema-orgkey-v1";
 
 export function getPrismaClient() {
-  const resolvedDatabaseUrls = resolvePrismaDatabaseUrls(process.env.DATABASE_URL);
+  const rawDatabaseUrl =
+    process.env.DATABASE_URL || process.env.PRISMA_DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRESQL_URL || "";
+  const resolvedDatabaseUrls = resolvePrismaDatabaseUrls(rawDatabaseUrl);
   const connectionString = resolvedDatabaseUrls?.databaseUrl;
 
   if (!connectionString) {

@@ -4,7 +4,13 @@ import "dotenv/config";
 import { defineConfig } from "prisma/config";
 import { resolvePrismaDatabaseUrls } from "./src/lib/prisma-database-url";
 
-const resolvedDatabaseUrls = resolvePrismaDatabaseUrls(process.env["DATABASE_URL"]);
+const rawDatabaseUrl =
+  process.env["DATABASE_URL"] ||
+  process.env["PRISMA_DATABASE_URL"] ||
+  process.env["POSTGRES_URL"] ||
+  process.env["POSTGRESQL_URL"] ||
+  "";
+const resolvedDatabaseUrls = resolvePrismaDatabaseUrls(rawDatabaseUrl);
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -12,7 +18,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: resolvedDatabaseUrls?.databaseUrl ?? process.env["DATABASE_URL"],
+    url: resolvedDatabaseUrls?.databaseUrl || rawDatabaseUrl,
     shadowDatabaseUrl: resolvedDatabaseUrls?.shadowDatabaseUrl,
   },
 });
