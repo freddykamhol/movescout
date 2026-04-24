@@ -36,7 +36,37 @@ async function ensureDefaultAdmin(prisma: NonNullable<ReturnType<typeof getPrism
     where: { orgKey, username: { equals: bootstrap.username, mode: "insensitive" } },
   });
 
-  if (!adminUser?.passwordHash) {
+  if (!adminUser) {
+    const ownerWithoutPassword = await prisma.user.findFirst({
+      where: { orgKey, role: "OWNER", passwordHash: null },
+      orderBy: [{ createdAt: "asc" }],
+    });
+
+    if (ownerWithoutPassword) {
+      await prisma.user.update({
+        where: { id: ownerWithoutPassword.id },
+        data: { username: bootstrap.username, passwordHash: await bcrypt.hash(bootstrap.password, 10) },
+      });
+      return;
+    }
+
+    await prisma.user.create({
+      data: {
+        displayName: "Administrator",
+        username: bootstrap.username,
+        passwordHash: await bcrypt.hash(bootstrap.password, 10),
+        orgKey,
+        role: "OWNER",
+      },
+    });
+    return;
+  }
+
+  if (!adminUser.passwordHash) {
+    await prisma.user.update({
+      where: { id: adminUser.id },
+      data: { username: bootstrap.username, passwordHash: await bcrypt.hash(bootstrap.password, 10) },
+    });
     return;
   }
 
