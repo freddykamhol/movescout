@@ -7,6 +7,26 @@ import { useState } from "react";
 import { useDashboardAppearance } from "@/app/_components/app-shell";
 import { getPageChrome } from "@/app/_components/page-styles";
 
+async function readJsonResponse<T>(response: Response): Promise<T | null> {
+  let rawText = "";
+
+  try {
+    rawText = await response.text();
+  } catch {
+    return null;
+  }
+
+  if (!rawText) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawText) as T;
+  } catch {
+    return null;
+  }
+}
+
 export default function LoginPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -29,9 +49,14 @@ export default function LoginPageClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-      const payload = (await response.json()) as { message?: string };
+      const payload = (await readJsonResponse<{ message?: string }>(response)) ?? {};
       if (!response.ok) {
-        throw new Error(payload.message ?? "Login fehlgeschlagen.");
+        throw new Error(
+          payload.message ??
+            (response.status
+              ? `Login fehlgeschlagen (HTTP ${response.status}). Bitte Plesk App-Root/Proxy und DATABASE_URL prüfen.`
+              : "Login fehlgeschlagen."),
+        );
       }
       const nextPath = searchParams.get("next")?.trim();
       router.push(nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard");
@@ -111,7 +136,7 @@ export default function LoginPageClient() {
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ identifier: resetIdentifier }),
                       });
-                      const payload = (await response.json()) as { message?: string };
+                      const payload = (await readJsonResponse<{ message?: string }>(response)) ?? {};
                       if (!response.ok) {
                         throw new Error(payload.message ?? "Reset konnte nicht ausgelöst werden.");
                       }
