@@ -16,6 +16,7 @@
     "build": "next build --webpack",
     "start": "NODE_ENV=production node server.js",
     "lint": "eslint",
+    "admin:create": "tsx scripts/create-admin.ts",
     "sftp:sync": "node scripts/sftp-sync.mjs"
   },
   "dependencies": {
@@ -51,6 +52,7 @@
     "eslint": "^9.39.3",
     "eslint-config-next": "^16.1.6",
     "tailwindcss": "^4.2.1",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.3"
   }
 }
