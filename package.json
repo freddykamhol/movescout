@@ -16,7 +16,7 @@
     "build": "next build --webpack",
     "start": "NODE_ENV=production node server.js",
     "lint": "eslint",
-    "admin:create": "tsx scripts/create-admin.ts",
+    "admin:create": "node ./node_modules/tsx/dist/cli.mjs scripts/create-admin.ts",
     "sftp:sync": "node scripts/sftp-sync.mjs"
   },
   "dependencies": {
