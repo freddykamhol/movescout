@@ -17,6 +17,7 @@
     "start": "NODE_ENV=production node server.js",
     "lint": "eslint",
     "admin:create": "node ./node_modules/tsx/dist/cli.mjs scripts/create-admin.ts",
+    "admin:inspect": "node ./node_modules/tsx/dist/cli.mjs scripts/admin-inspect.ts",
     "sftp:sync": "node scripts/sftp-sync.mjs"
   },
   "dependencies": {
