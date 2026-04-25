@@ -39,7 +39,8 @@
     "prisma": "7.4.2",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "ssh2-sftp-client": "^11.0.0"
+    "ssh2-sftp-client": "^11.0.0",
+    "tsx": "^4.20.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",
@@ -52,7 +53,6 @@
     "eslint": "^9.39.3",
     "eslint-config-next": "^16.1.6",
     "tailwindcss": "^4.2.1",
-    "tsx": "^4.20.5",
     "typescript": "^5.9.3"
   }
 }
