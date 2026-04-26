@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { useDashboardAppearance } from "@/app/_components/app-shell";
 import { getPageChrome } from "@/app/_components/page-styles";
+import SettingsTabs from "@/app/_components/settings-tabs";
 
 type BenutzerPageClientProps = {
   initialUsers: User[];
@@ -243,6 +244,7 @@ export default function BenutzerPageClient({ initialUsers }: BenutzerPageClientP
             <p className={chrome.heroAccentMeta}>in dieser Organisation</p>
           </div>
         </div>
+        <SettingsTabs lightMode={lightMode} />
       </header>
 
       <section className={chrome.panel}>

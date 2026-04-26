@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useDashboardAppearance } from "@/app/_components/app-shell";
 import { getPageChrome } from "@/app/_components/page-styles";
+import SettingsTabs from "@/app/_components/settings-tabs";
 
 type SessionPayload = {
   organization?: {
@@ -146,6 +147,7 @@ export default function ProfilPageClient() {
             <p className={chrome.heroAccentMeta}>{user?.role ? `Rolle: ${user.role}` : "Rolle wird geladen"}</p>
           </div>
         </div>
+        <SettingsTabs lightMode={lightMode} />
       </header>
 
       <section className={chrome.panel}>

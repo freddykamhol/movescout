@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { useDashboardAppearance } from "@/app/_components/app-shell";
 import { getPageChrome } from "@/app/_components/page-styles";
+import SettingsTabs from "@/app/_components/settings-tabs";
 import type { IntegrationSettingsRecord } from "@/lib/integration-settings";
 
 type Props = {
@@ -192,6 +193,7 @@ export default function IntegrationenPageClient({ initialSettings }: Props) {
             </p>
           </div>
         </div>
+        <SettingsTabs lightMode={lightMode} />
       </header>
 
       <section className={chrome.panel}>
@@ -337,4 +339,3 @@ export default function IntegrationenPageClient({ initialSettings }: Props) {
     </div>
   );
 }
-

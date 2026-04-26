@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { useDashboardAppearance } from "@/app/_components/app-shell";
 import { getPageChrome } from "@/app/_components/page-styles";
+import SettingsTabs from "@/app/_components/settings-tabs";
 
 type OrganigrammPageClientProps = {
   initialNodes: OrgChartNode[];
@@ -215,6 +216,7 @@ export default function OrganigrammPageClient({ initialNodes }: OrganigrammPageC
             <p className={chrome.heroAccentMeta}>Knoten in der Organisation</p>
           </div>
         </div>
+        <SettingsTabs lightMode={lightMode} />
       </header>
 
       <section className={chrome.panel}>
@@ -331,4 +333,3 @@ export default function OrganigrammPageClient({ initialNodes }: OrganigrammPageC
     </div>
   );
 }
-

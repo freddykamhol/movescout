@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function EinstellungenPage() {
-  redirect("/einstellungen/firma");
+  redirect("/einstellungen/preise");
 }

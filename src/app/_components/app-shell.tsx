@@ -211,10 +211,9 @@ function hasAppSidebar(pathname: string) {
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [settingsOpen, setSettingsOpen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<null | "settings" | "user">(null);
-  const [sidebarFlyout, setSidebarFlyout] = useState<null | "settings" | "user">(null);
+  const [sidebarFlyout, setSidebarFlyout] = useState<null | "user">(null);
   const [isLgUp, setIsLgUp] = useState(false);
   const [isShortViewport, setIsShortViewport] = useState(false);
   const [lightMode, setLightMode] = useState(false);
@@ -225,20 +224,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const showSidebar = hasAppSidebar(pathname);
   const appearanceValue = useMemo(() => ({ lightMode }), [lightMode]);
   const compactSidebar = !isLgUp && isShortViewport;
-  const settingsButtonClass = `mt-1 flex w-full items-center rounded-xl text-left font-medium transition ${
-    activePage === "settings"
-      ? lightMode
-        ? "bg-[#FF007F] text-white ring-1 ring-[#FF007F]/40"
-        : "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/35"
-      : lightMode
-        ? "text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950"
-        : "text-zinc-300 hover:bg-white/10 hover:text-white"
-  } ${compactSidebar ? "px-2 py-2 text-xs" : "px-3 py-2.5 text-sm"} ${sidebarCollapsed ? "justify-center" : "gap-3"}`;
-  const settingsIconClass = activePage === "settings"
-    ? "text-white"
-    : lightMode
-      ? "text-zinc-500"
-      : "text-zinc-400";
 
   useEffect(() => {
     let aborted = false;
@@ -320,7 +305,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
     }
 
     setSidebarCollapsed(true);
-    setSettingsOpen(false);
     setUserMenuOpen(false);
   }, [compactSidebar]);
 
@@ -410,9 +394,22 @@ export default function AppShell({ children }: { children: ReactNode }) {
                     lightMode ? "bg-[#FF007F]/10" : "bg-[#FF007F]/15"
                   }`}
                 >
-                  <p className="text-xs uppercase tracking-[0.22em] text-[#FF007F]">
-                    {sidebarCollapsed ? "MS" : "MoveScout"}
-                  </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-xs uppercase tracking-[0.22em] text-[#FF007F]">
+                      {sidebarCollapsed ? "MS" : "MoveScout"}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setLightMode((previousValue) => !previousValue)}
+                      className={`inline-flex h-9 w-9 items-center justify-center rounded-2xl border transition ${
+                        lightMode ? "border-zinc-200 bg-white/70 text-zinc-900 hover:bg-white" : "border-white/10 bg-white/5 text-white hover:bg-white/10"
+                      }`}
+                      aria-label={lightMode ? "Darkmode aktivieren" : "Lightmode aktivieren"}
+                      title={lightMode ? "Darkmode" : "Lightmode"}
+                    >
+                      {lightMode ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />}
+                    </button>
+                  </div>
                   {sidebarCollapsed ? null : (
                     <h1 className={`mt-2 text-xl font-semibold ${lightMode ? "text-zinc-900" : "text-white"}`}>
                       Hauptmenü
@@ -458,103 +455,18 @@ export default function AppShell({ children }: { children: ReactNode }) {
                     lightMode={lightMode}
                   />
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (isLgUp) {
-                        setSettingsOpen((previousValue) => !previousValue);
-                        return;
-                      }
-                      setSidebarFlyout((previousValue) => (previousValue === "settings" ? null : "settings"));
-                      setUserMenuOpen(false);
-                    }}
-                    className={settingsButtonClass}
-                    title={sidebarCollapsed ? "Einstellungen" : undefined}
-                  >
-                    <span className={settingsIconClass}>
-                      <SettingsIcon />
-                    </span>
-                    {sidebarCollapsed ? null : <span className="flex-1">Einstellungen</span>}
-                    {sidebarCollapsed ? null : (
-                      <ChevronIcon
-                        className={`h-4 w-4 transition ${settingsOpen ? "rotate-180" : "rotate-0"} ${
-                          activePage === "settings" ? "text-white" : lightMode ? "text-zinc-500" : "text-zinc-400"
-                        }`}
-                      />
-                    )}
-                  </button>
-
-                  {settingsOpen && !sidebarCollapsed && isLgUp ? (
-                    <div className={`ml-4 mt-1 space-y-1 border-l pl-3 ${lightMode ? "border-zinc-300" : "border-white/10"}`}>
-                      <SidebarLink
-                        active={pathname === "/einstellungen" || pathname === "/einstellungen/preise" || pathname.startsWith("/einstellungen/preise/")}
-                        collapsed={false}
-                        dense={compactSidebar}
-                        href="/einstellungen/preise"
-                        icon={<SettingsIcon className="h-4 w-4" />}
-                        label="Preise"
-                        lightMode={lightMode}
-                      />
-                      <SidebarLink
-                        active={pathname === "/einstellungen/firma" || pathname.startsWith("/einstellungen/firma/")}
-                        collapsed={false}
-                        dense={compactSidebar}
-                        href="/einstellungen/firma"
-                        icon={<DashboardIcon className="h-4 w-4" />}
-                        label="Firmendaten"
-                        lightMode={lightMode}
-                      />
-                      <SidebarLink
-                        active={pathname === "/einstellungen/benutzer" || pathname.startsWith("/einstellungen/benutzer/")}
-                        collapsed={false}
-                        dense={compactSidebar}
-                        href="/einstellungen/benutzer"
-                        icon={<UserIcon className="h-4 w-4" />}
-                        label="Benutzer"
-                        lightMode={lightMode}
-                      />
-	                      <SidebarLink
-	                        active={pathname === "/einstellungen/organigramm" || pathname.startsWith("/einstellungen/organigramm/")}
-	                        collapsed={false}
-	                        dense={compactSidebar}
-	                        href="/einstellungen/organigramm"
-	                        icon={<ChevronIcon className="h-4 w-4" />}
-	                        label="Organigramm"
-	                        lightMode={lightMode}
-	                      />
-	                      <SidebarLink
-	                        active={pathname === "/einstellungen/integrationen" || pathname.startsWith("/einstellungen/integrationen/")}
-	                        collapsed={false}
-	                        dense={compactSidebar}
-	                        href="/einstellungen/integrationen"
-	                        icon={<DocumentsIcon className="h-4 w-4" />}
-	                        label="Integrationen"
-	                        lightMode={lightMode}
-	                      />
-	                    </div>
-	                  ) : null}
+                  <SidebarLink
+                    active={activePage === "settings"}
+                    collapsed={sidebarCollapsed}
+                    dense={compactSidebar}
+                    href="/einstellungen/preise"
+                    icon={<SettingsIcon />}
+                    label="Einstellungen"
+                    lightMode={lightMode}
+                  />
                 </nav>
 
                 <div className="mt-4 pt-2">
-                  {compactSidebar ? null : (
-                    <button
-                      type="button"
-                      onClick={() => setLightMode((previousValue) => !previousValue)}
-                      className={`mb-2 flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                        lightMode
-                          ? "bg-zinc-900 text-white hover:bg-zinc-800"
-                          : "bg-white/10 text-zinc-100 hover:bg-white/15"
-                      } ${sidebarCollapsed ? "justify-center px-2" : "justify-between"}`}
-                      title={sidebarCollapsed ? (lightMode ? "Darkmode" : "Lightmode") : undefined}
-                    >
-                      <span className="flex items-center gap-2">
-                        {lightMode ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />}
-                        {sidebarCollapsed ? null : lightMode ? "Darkmode" : "Lightmode"}
-                      </span>
-                      {sidebarCollapsed ? null : <span className="text-xs text-[#FF007F]">{lightMode ? "AN" : "AUS"}</span>}
-                    </button>
-                  )}
-
                   {compactSidebar ? (
                     <button
                       type="button"
@@ -602,11 +514,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
                           <>
                             <div className="flex-1">
                               <p className="text-sm font-medium">{sessionUser?.displayName ?? "Benutzer"}</p>
-                              <p className={`text-xs ${lightMode ? "text-zinc-500" : "text-zinc-400"}`}>
-                                {userRoleLabel}
-                                {sessionOrg?.name ? ` · ${sessionOrg.name}` : sessionOrg?.orgKey ? ` · ${sessionOrg.orgKey}` : ""}
-                              </p>
-                            </div>
+                            <p className={`text-xs ${lightMode ? "text-zinc-500" : "text-zinc-400"}`}>
+                              {userRoleLabel}
+                            </p>
+                          </div>
                             <ChevronIcon
                               className={`h-4 w-4 transition ${userMenuOpen ? "rotate-180" : "rotate-0"} ${
                                 lightMode ? "text-zinc-500" : "text-zinc-400"
@@ -709,7 +620,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   <div className={`flex items-center justify-between gap-3 border-b px-4 py-3 ${lightMode ? "border-zinc-200" : "border-white/10"}`}>
                     <div>
                       <p className="text-xs uppercase tracking-[0.22em] text-[#FF007F]">
-                        {sidebarFlyout === "settings" ? "Einstellungen" : "Benutzer"}
+                        Benutzer
                       </p>
                       <p className={`mt-1 text-sm ${lightMode ? "text-zinc-600" : "text-zinc-300"}`}>
                         {sessionOrg?.name ? sessionOrg.name : sessionOrg?.orgKey ? sessionOrg.orgKey : ""}
@@ -728,139 +639,58 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   </div>
 
                   <div className="h-full overflow-y-auto p-4">
-                    {sidebarFlyout === "settings" ? (
-                      <div className="grid gap-2">
-                        <Link
-                          href="/einstellungen/preise"
-                          onClick={() => setSidebarFlyout(null)}
-                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
-                          }`}
-                        >
-                          Preise
-                        </Link>
-                        <Link
-                          href="/einstellungen/firma"
-                          onClick={() => setSidebarFlyout(null)}
-                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
-                          }`}
-                        >
-                          Firmendaten
-                        </Link>
-                        <Link
-                          href="/einstellungen/benutzer"
-                          onClick={() => setSidebarFlyout(null)}
-                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
-                          }`}
-                        >
-                          Benutzer
-                        </Link>
-                        <Link
-                          href="/einstellungen/organigramm"
-                          onClick={() => setSidebarFlyout(null)}
-                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
-                          }`}
-                        >
-                          Organigramm
-                        </Link>
-                        <Link
-                          href="/einstellungen/integrationen"
-                          onClick={() => setSidebarFlyout(null)}
-                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
-                          }`}
-                        >
-                          Integrationen
-                        </Link>
-
-                        <button
-                          type="button"
-                          onClick={() => setLightMode((previousValue) => !previousValue)}
-                          className={`mt-2 flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                            lightMode ? "bg-zinc-900 text-white hover:bg-zinc-800" : "bg-[#FF007F] text-white hover:bg-[#e30072]"
-                          }`}
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            {lightMode ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />}
-                            {lightMode ? "Darkmode" : "Lightmode"}
-                          </span>
-                          <span className="text-xs text-white/80">{lightMode ? "AN" : "AUS"}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => void logout()}
-                          className={`mt-2 flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                            lightMode
-                              ? "bg-white text-zinc-900 ring-1 ring-zinc-200 hover:bg-zinc-100"
-                              : "bg-white/10 text-white ring-1 ring-white/10 hover:bg-white/15"
-                          }`}
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            <span className="text-[#FF007F]">
-                              <LogoutIcon className="h-5 w-5" />
-                            </span>
-                            Logout
-                          </span>
-                        </button>
+                    <div className="grid gap-2">
+                      <Link
+                        href="/einstellungen/profil"
+                        onClick={() => setSidebarFlyout(null)}
+                        className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                          lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                        }`}
+                      >
+                        Eigenes Profil
+                      </Link>
+                      <Link
+                        href="/einstellungen/benutzer"
+                        onClick={() => setSidebarFlyout(null)}
+                        className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                          lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                        }`}
+                      >
+                        Benutzer verwalten
+                      </Link>
+                      <Link
+                        href="/einstellungen/firma"
+                        onClick={() => setSidebarFlyout(null)}
+                        className="rounded-2xl bg-[#FF007F]/90 px-4 py-3 text-sm font-medium text-white transition hover:bg-[#e30072]"
+                      >
+                        Firmendaten
+                      </Link>
+                      <div
+                        className={`mt-2 rounded-2xl p-4 ${
+                          lightMode ? "bg-zinc-50 ring-1 ring-zinc-200" : "bg-white/5 ring-1 ring-white/10"
+                        }`}
+                      >
+                        <p className="text-sm font-semibold">{sessionUser?.displayName ?? "Benutzer"}</p>
+                        <p className={`mt-1 text-xs ${lightMode ? "text-zinc-600" : "text-zinc-300"}`}>{userRoleLabel}</p>
                       </div>
-                    ) : (
-                      <div className="grid gap-2">
-                        <Link
-                          href="/einstellungen/profil"
-                          onClick={() => setSidebarFlyout(null)}
-                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
-                          }`}
-                        >
-                          Eigenen Benutzer bearbeiten
-                        </Link>
-                        <Link
-                          href="/einstellungen/benutzer"
-                          onClick={() => setSidebarFlyout(null)}
-                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
-                          }`}
-                        >
-                          Benutzer verwalten
-                        </Link>
-                        <Link
-                          href="/einstellungen/firma"
-                          onClick={() => setSidebarFlyout(null)}
-                          className="rounded-2xl bg-[#FF007F]/90 px-4 py-3 text-sm font-medium text-white transition hover:bg-[#e30072]"
-                        >
-                          Firmendaten
-                        </Link>
-                        <div
-                          className={`mt-2 rounded-2xl p-4 ${
-                            lightMode ? "bg-zinc-50 ring-1 ring-zinc-200" : "bg-white/5 ring-1 ring-white/10"
-                          }`}
-                        >
-                          <p className="text-sm font-semibold">{sessionUser?.displayName ?? "Benutzer"}</p>
-                          <p className={`mt-1 text-xs ${lightMode ? "text-zinc-600" : "text-zinc-300"}`}>{userRoleLabel}</p>
-                        </div>
 
-                        <button
-                          type="button"
-                          onClick={() => void logout()}
-                          className={`mt-2 flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                            lightMode
-                              ? "bg-white text-zinc-900 ring-1 ring-zinc-200 hover:bg-zinc-100"
-                              : "bg-white/10 text-white ring-1 ring-white/10 hover:bg-white/15"
-                          }`}
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            <span className="text-[#FF007F]">
-                              <LogoutIcon className="h-5 w-5" />
-                            </span>
-                            Logout
+                      <button
+                        type="button"
+                        onClick={() => void logout()}
+                        className={`mt-2 flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                          lightMode
+                            ? "bg-white text-zinc-900 ring-1 ring-zinc-200 hover:bg-zinc-100"
+                            : "bg-white/10 text-white ring-1 ring-white/10 hover:bg-white/15"
+                        }`}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <span className="text-[#FF007F]">
+                            <LogoutIcon className="h-5 w-5" />
                           </span>
-                        </button>
-                      </div>
-                    )}
+                          Logout
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </aside>
               </div>
