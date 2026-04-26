@@ -1,12 +1,13 @@
 import OrganigrammPageClient from "./organigramm-page-client";
 
+import type { OrgChartNode } from "@/generated/prisma/client";
 import { getCurrentOrgKey, ensureOrganization } from "@/lib/org-context";
 import { getPrismaClient } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrganigrammSettingsPage() {
-  let initialNodes = [];
+  let initialNodes: OrgChartNode[] = [];
 
   try {
     const prisma = getPrismaClient();

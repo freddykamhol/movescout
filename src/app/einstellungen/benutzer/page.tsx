@@ -1,12 +1,13 @@
 import BenutzerPageClient from "./benutzer-page-client";
 
+import type { User } from "@/generated/prisma/client";
 import { getCurrentOrgKey, ensureOrganization } from "@/lib/org-context";
 import { getPrismaClient } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function BenutzerSettingsPage() {
-  let initialUsers = [];
+  let initialUsers: User[] = [];
 
   try {
     const prisma = getPrismaClient();
