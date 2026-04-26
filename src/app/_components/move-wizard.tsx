@@ -1164,6 +1164,7 @@ function MoveWizardModal({
   const moveId = options?.moveId?.trim() || "";
   const isEditMode = Boolean(moveId);
   const [currentStepId, setCurrentStepId] = useState(baseWizardSteps[0]?.id ?? "customer");
+  const [stepMenuOpen, setStepMenuOpen] = useState(false);
   const [wizardData, setWizardData] = useState(() => buildInitialWizardData(options));
   const [editingMoveMeta, setEditingMoveMeta] = useState<{
     customerId: string;
@@ -1297,6 +1298,10 @@ function MoveWizardModal({
   const visibleWizardSteps = useMemo(() => wizardSteps.filter((step) => !step.hidden), [wizardSteps]);
   const currentStepIndex = useMemo(() => wizardSteps.findIndex((step) => step.id === currentStepId), [currentStepId, wizardSteps]);
   const currentStep = wizardSteps[Math.max(currentStepIndex, 0)] ?? wizardSteps[0];
+  const visibleStepIndex = useMemo(
+    () => Math.max(0, visibleWizardSteps.findIndex((step) => step.id === currentStep.id)),
+    [currentStep.id, visibleWizardSteps],
+  );
   const routeAddresses = [wizardData.moveOutAddress, ...wizardData.stopAddresses, wizardData.moveInAddress];
   const addressSectionCount = wizardData.stopAddresses.length + 2;
   const customerAddressSummary = getLocationSummary(wizardData.customer);
@@ -1364,6 +1369,8 @@ function MoveWizardModal({
     .filter((group) => group.items.length > 0);
   const sourceLabel = options?.sourceLabel ?? "Allgemein";
   const customerNumber = editingMoveMeta?.customerNumber ?? options?.customerPrefill?.customerNumber;
+  const stepProgressPercent =
+    visibleWizardSteps.length > 1 ? Math.round((visibleStepIndex / (visibleWizardSteps.length - 1)) * 100) : 0;
   const routeCalculationRequest = useMemo<MoveCalculationRequest>(
     () => ({
       furnitureSelections: wizardData.furnitureSelections.map((furnitureSelection) => buildMoveCalculationFurniture(furnitureSelection)),
@@ -3958,7 +3965,7 @@ function MoveWizardModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-3 md:p-6">
+    <div className="fixed inset-0 z-50 flex items-stretch justify-center p-0 sm:items-center sm:p-3 md:p-6">
       <button
         type="button"
         aria-label="Modal schließen"
@@ -3967,7 +3974,7 @@ function MoveWizardModal({
       />
 
       <div
-        className={`relative z-10 flex max-h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] ${
+        className={`relative z-10 flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-none sm:max-h-[96vh] sm:rounded-[2rem] ${
           lightMode ? "bg-zinc-100 text-zinc-900 ring-1 ring-zinc-300" : "bg-zinc-950 text-zinc-100 ring-1 ring-white/10"
         }`}
       >
@@ -3982,7 +3989,7 @@ function MoveWizardModal({
 		              </p>
 		            </div>
 
-	            <div className="flex items-start gap-3">
+	            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-3">
 	              <div className={chrome.heroAccentCard}>
 	                <p className={chrome.heroAccentEyebrow}>Live-Preisanzeige</p>
 	                <p className={chrome.heroAccentValue}>{livePriceLabel}</p>
@@ -3993,39 +4000,153 @@ function MoveWizardModal({
 	            </div>
 	          </div>
 
-	          <div
-	            className="mt-4 flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] xl:grid xl:snap-none xl:grid-cols-2 xl:overflow-visible xl:pb-0 xl:[grid-template-columns:repeat(var(--wizard-steps),minmax(0,1fr))]"
-	            style={{ ["--wizard-steps" as never]: visibleWizardSteps.length }}
-	          >
-	            {visibleWizardSteps.map((step, visibleIndex) => {
-	              const stepIndex = wizardSteps.findIndex((candidate) => candidate.id === step.id);
-	              const isActive = step.id === currentStep.id;
-	              const isCompleted = stepIndex >= 0 && currentStepIndex >= 0 ? stepIndex < currentStepIndex : false;
+	          <div className="mt-4 grid gap-3">
+	            <div className="flex items-center justify-between gap-3 md:hidden">
+	              <div className="min-w-0">
+	                <p className={`text-[11px] uppercase tracking-[0.18em] ${chrome.overline}`}>
+	                  Schritt {visibleStepIndex + 1} / {visibleWizardSteps.length}
+	                </p>
+	                <p className="mt-1 truncate text-sm font-semibold">{currentStep.title}</p>
+	              </div>
 
-	              return (
+	              <div className="relative shrink-0">
+	                {stepMenuOpen ? (
+	                  <button
+	                    type="button"
+	                    aria-label="Schritte schließen"
+	                    className="fixed inset-0 z-10 cursor-default"
+	                    onClick={() => setStepMenuOpen(false)}
+	                  />
+	                ) : null}
+
 	                <button
-	                  key={step.id}
 	                  type="button"
-	                  onClick={() => setCurrentStepId(step.id)}
-	                  className={`min-w-[190px] shrink-0 snap-start rounded-2xl px-3 py-3 text-left transition xl:min-w-0 xl:shrink ${
-	                    isActive
-	                      ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/20"
-	                      : isCompleted
-	                        ? lightMode
-	                          ? "bg-[#FF007F]/10 text-zinc-900 ring-1 ring-[#FF007F]/20"
-                          : "bg-[#FF007F]/12 text-zinc-100 ring-1 ring-[#FF007F]/25"
-                        : lightMode
-                          ? "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
-                          : "bg-zinc-900 text-zinc-300 ring-1 ring-white/10 hover:bg-zinc-800"
+	                  onClick={() => setStepMenuOpen((prev) => !prev)}
+	                  className={`relative z-20 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
+	                    lightMode
+	                      ? "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+	                      : "border-white/10 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
 	                  }`}
+	                  aria-haspopup="menu"
+	                  aria-expanded={stepMenuOpen}
 	                >
-	                  <p className={`text-[11px] uppercase tracking-[0.16em] ${isActive ? "text-white/75" : "text-[#FF007F]"}`}>
-	                    Seite {visibleIndex + 1}
-	                  </p>
-	                  <p className="mt-1 text-sm font-medium">{step.title}</p>
+	                  Schritte
+	                  <span className={chrome.overline}>{stepMenuOpen ? "▲" : "▼"}</span>
 	                </button>
-	              );
-	            })}
+
+	                {stepMenuOpen ? (
+	                  <div
+	                    className={`absolute right-0 top-11 z-30 w-[260px] rounded-xl border p-2 ${
+	                      lightMode
+	                        ? "border-zinc-200 bg-white shadow-xl shadow-zinc-900/10"
+	                        : "border-white/10 bg-zinc-950 shadow-xl shadow-black/40"
+	                    }`}
+	                    role="menu"
+	                  >
+	                    <p className={`px-3 py-2 text-xs ${chrome.overline}`}>Schritte</p>
+	                    {visibleWizardSteps.map((step, visibleIndex) => {
+	                      const stepIndex = wizardSteps.findIndex((candidate) => candidate.id === step.id);
+	                      const isActive = step.id === currentStep.id;
+	                      const isCompleted = stepIndex >= 0 && currentStepIndex >= 0 ? stepIndex < currentStepIndex : false;
+
+	                      return (
+	                        <button
+	                          key={step.id}
+	                          type="button"
+	                          onClick={() => {
+	                            setCurrentStepId(step.id);
+	                            setStepMenuOpen(false);
+	                          }}
+	                          className={`flex w-full items-center justify-between gap-4 rounded-lg px-3 py-2 text-left text-sm transition ${
+	                            isActive
+	                              ? "bg-[#FF007F] text-white"
+	                              : lightMode
+	                                ? "text-zinc-900 hover:bg-zinc-100"
+	                                : "text-zinc-100 hover:bg-white/10"
+	                          }`}
+	                          role="menuitem"
+	                        >
+	                          <span className="min-w-0 truncate">
+	                            {visibleIndex + 1}. {step.title}
+	                          </span>
+	                          <span className={`shrink-0 text-xs ${isActive ? "text-white/80" : isCompleted ? "text-[#FF007F]" : chrome.overline}`}>
+	                            {isActive ? "Aktiv" : isCompleted ? "OK" : ""}
+	                          </span>
+	                        </button>
+	                      );
+	                    })}
+	                  </div>
+	                ) : null}
+	              </div>
+	            </div>
+
+	            <div className={`h-2 overflow-hidden rounded-full ${lightMode ? "bg-zinc-200" : "bg-white/10"} md:hidden`}>
+	              <div className="h-full rounded-full bg-[#FF007F]" style={{ width: `${stepProgressPercent}%` }} />
+	            </div>
+
+	            <div className="hidden md:flex items-center gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] xl:hidden">
+	              {visibleWizardSteps.map((step, visibleIndex) => {
+	                const stepIndex = wizardSteps.findIndex((candidate) => candidate.id === step.id);
+	                const isActive = step.id === currentStep.id;
+	                const isCompleted = stepIndex >= 0 && currentStepIndex >= 0 ? stepIndex < currentStepIndex : false;
+
+	                return (
+	                  <button
+	                    key={step.id}
+	                    type="button"
+	                    onClick={() => setCurrentStepId(step.id)}
+	                    className={`shrink-0 rounded-full px-3 py-2 text-sm transition ${
+	                      isActive
+	                        ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/20"
+	                        : isCompleted
+	                          ? lightMode
+	                            ? "bg-[#FF007F]/10 text-zinc-900 ring-1 ring-[#FF007F]/20"
+	                            : "bg-[#FF007F]/12 text-zinc-100 ring-1 ring-[#FF007F]/25"
+	                          : lightMode
+	                            ? "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
+	                            : "bg-zinc-900 text-zinc-300 ring-1 ring-white/10 hover:bg-zinc-800"
+	                    }`}
+	                  >
+	                    {visibleIndex + 1}. {step.title}
+	                  </button>
+	                );
+	              })}
+	            </div>
+
+	            <div
+	              className="hidden xl:grid xl:grid-cols-2 xl:gap-2 xl:[grid-template-columns:repeat(var(--wizard-steps),minmax(0,1fr))]"
+	              style={{ ["--wizard-steps" as never]: visibleWizardSteps.length }}
+	            >
+	              {visibleWizardSteps.map((step, visibleIndex) => {
+	                const stepIndex = wizardSteps.findIndex((candidate) => candidate.id === step.id);
+	                const isActive = step.id === currentStep.id;
+	                const isCompleted = stepIndex >= 0 && currentStepIndex >= 0 ? stepIndex < currentStepIndex : false;
+
+	                return (
+	                  <button
+	                    key={step.id}
+	                    type="button"
+	                    onClick={() => setCurrentStepId(step.id)}
+	                    className={`rounded-2xl px-3 py-3 text-left transition ${
+	                      isActive
+	                        ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/20"
+	                        : isCompleted
+	                          ? lightMode
+	                            ? "bg-[#FF007F]/10 text-zinc-900 ring-1 ring-[#FF007F]/20"
+	                            : "bg-[#FF007F]/12 text-zinc-100 ring-1 ring-[#FF007F]/25"
+	                          : lightMode
+	                            ? "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
+	                            : "bg-zinc-900 text-zinc-300 ring-1 ring-white/10 hover:bg-zinc-800"
+	                    }`}
+	                  >
+	                    <p className={`text-[11px] uppercase tracking-[0.16em] ${isActive ? "text-white/75" : "text-[#FF007F]"}`}>
+	                      Seite {visibleIndex + 1}
+	                    </p>
+	                    <p className="mt-1 text-sm font-medium">{step.title}</p>
+	                  </button>
+	                );
+	              })}
+	            </div>
 	          </div>
 	        </header>
 

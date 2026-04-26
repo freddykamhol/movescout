@@ -4,14 +4,14 @@ export function getPageChrome(lightMode: boolean) {
   const bodyText = lightMode ? "text-zinc-900" : "text-white";
 
   return {
-    page: "mx-auto flex w-full max-w-6xl flex-col gap-4 px-3 sm:px-4",
+    page: "mx-auto flex w-full max-w-6xl flex-col gap-3 px-3 sm:gap-4 sm:px-4",
     hero: `rounded-2xl p-5 sm:p-6 ${
       lightMode
         ? "bg-gradient-to-r from-zinc-50 via-white to-zinc-50 ring-1 ring-zinc-200"
         : "bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 ring-1 ring-white/10"
     }`,
     heroEyebrow: "text-xs uppercase tracking-[0.2em] text-[#FF007F]",
-    heroTitle: `text-2xl font-semibold md:text-3xl ${bodyText}`,
+    heroTitle: `text-2xl font-semibold sm:text-3xl ${bodyText}`,
     heroText: `mt-1 max-w-2xl ${mutedText}`,
     heroAccentCard: "rounded-2xl bg-[#FF007F]/10 px-4 py-3 ring-1 ring-[#FF007F]/30",
     heroAccentEyebrow: `text-xs uppercase tracking-[0.16em] ${mutedText}`,
