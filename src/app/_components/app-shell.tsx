@@ -113,14 +113,15 @@ function LogoutIcon({ className = "h-5 w-5" }: IconProps) {
 type SidebarLinkProps = {
   active?: boolean;
   collapsed: boolean;
+  dense?: boolean;
   href?: string;
   icon: ReactNode;
   label: string;
   lightMode: boolean;
 };
 
-function SidebarLink({ active, collapsed, href, icon, label, lightMode }: SidebarLinkProps) {
-  const className = `group relative flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
+function SidebarLink({ active, collapsed, dense, href, icon, label, lightMode }: SidebarLinkProps) {
+  const className = `group relative flex w-full items-center rounded-xl px-3 text-left font-medium transition ${
     active
       ? lightMode
         ? "bg-[#FF007F] text-white ring-1 ring-[#FF007F]/40"
@@ -128,7 +129,7 @@ function SidebarLink({ active, collapsed, href, icon, label, lightMode }: Sideba
       : lightMode
         ? "text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950"
         : "text-zinc-300 hover:bg-white/10 hover:text-white"
-  } ${collapsed ? "justify-center px-2" : "gap-3"}`;
+  } ${dense ? "py-2 text-xs" : "py-2.5 text-sm"} ${collapsed ? "justify-center px-2" : "gap-3"}`;
 
   const iconClassName = active
     ? "text-white"
@@ -215,6 +216,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [mobilePanel, setMobilePanel] = useState<null | "settings" | "user">(null);
   const [sidebarFlyout, setSidebarFlyout] = useState<null | "settings" | "user">(null);
   const [isLgUp, setIsLgUp] = useState(false);
+  const [isShortViewport, setIsShortViewport] = useState(false);
   const [lightMode, setLightMode] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sessionUser, setSessionUser] = useState<{ displayName: string; role: string } | null>(null);
@@ -222,7 +224,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const activePage = getActivePage(pathname);
   const showSidebar = hasAppSidebar(pathname);
   const appearanceValue = useMemo(() => ({ lightMode }), [lightMode]);
-  const settingsButtonClass = `mt-1 flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
+  const compactSidebar = !isLgUp && isShortViewport;
+  const settingsButtonClass = `mt-1 flex w-full items-center rounded-xl text-left font-medium transition ${
     activePage === "settings"
       ? lightMode
         ? "bg-[#FF007F] text-white ring-1 ring-[#FF007F]/40"
@@ -230,7 +233,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       : lightMode
         ? "text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950"
         : "text-zinc-300 hover:bg-white/10 hover:text-white"
-  } ${sidebarCollapsed ? "justify-center px-2" : "gap-3"}`;
+  } ${compactSidebar ? "px-2 py-2 text-xs" : "px-3 py-2.5 text-sm"} ${sidebarCollapsed ? "justify-center" : "gap-3"}`;
   const settingsIconClass = activePage === "settings"
     ? "text-white"
     : lightMode
@@ -290,6 +293,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-height: 760px)");
+    const onChange = () => setIsShortViewport(mediaQuery.matches);
+    onChange();
+    mediaQuery.addEventListener("change", onChange);
+    return () => {
+      mediaQuery.removeEventListener("change", onChange);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!mobilePanel) {
       return;
     }
@@ -300,6 +313,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
       document.body.style.overflow = previousOverflow;
     };
   }, [mobilePanel]);
+
+  useEffect(() => {
+    if (!compactSidebar) {
+      return;
+    }
+
+    setSidebarCollapsed(true);
+    setSettingsOpen(false);
+    setUserMenuOpen(false);
+  }, [compactSidebar]);
 
   useEffect(() => {
     if (!sidebarFlyout) {
@@ -401,6 +424,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   <SidebarLink
                     active={activePage === "dashboard"}
                     collapsed={sidebarCollapsed}
+                    dense={compactSidebar}
                     href="/dashboard"
                     icon={<DashboardIcon />}
                     label="Dashboard"
@@ -409,6 +433,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   <SidebarLink
                     active={activePage === "customers"}
                     collapsed={sidebarCollapsed}
+                    dense={compactSidebar}
                     href="/kunden"
                     icon={<CustomersIcon />}
                     label="Kunden"
@@ -417,6 +442,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   <SidebarLink
                     active={activePage === "moves"}
                     collapsed={sidebarCollapsed}
+                    dense={compactSidebar}
                     href="/umzuege"
                     icon={<MovesIcon />}
                     label="Umzüge"
@@ -425,6 +451,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   <SidebarLink
                     active={activePage === "documents"}
                     collapsed={sidebarCollapsed}
+                    dense={compactSidebar}
                     href="/dokumente"
                     icon={<DocumentsIcon />}
                     label="Dokumente"
@@ -462,6 +489,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                       <SidebarLink
                         active={pathname === "/einstellungen" || pathname === "/einstellungen/preise" || pathname.startsWith("/einstellungen/preise/")}
                         collapsed={false}
+                        dense={compactSidebar}
                         href="/einstellungen/preise"
                         icon={<SettingsIcon className="h-4 w-4" />}
                         label="Preise"
@@ -470,6 +498,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                       <SidebarLink
                         active={pathname === "/einstellungen/firma" || pathname.startsWith("/einstellungen/firma/")}
                         collapsed={false}
+                        dense={compactSidebar}
                         href="/einstellungen/firma"
                         icon={<DashboardIcon className="h-4 w-4" />}
                         label="Firmendaten"
@@ -478,6 +507,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                       <SidebarLink
                         active={pathname === "/einstellungen/benutzer" || pathname.startsWith("/einstellungen/benutzer/")}
                         collapsed={false}
+                        dense={compactSidebar}
                         href="/einstellungen/benutzer"
                         icon={<UserIcon className="h-4 w-4" />}
                         label="Benutzer"
@@ -486,6 +516,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 	                      <SidebarLink
 	                        active={pathname === "/einstellungen/organigramm" || pathname.startsWith("/einstellungen/organigramm/")}
 	                        collapsed={false}
+	                        dense={compactSidebar}
 	                        href="/einstellungen/organigramm"
 	                        icon={<ChevronIcon className="h-4 w-4" />}
 	                        label="Organigramm"
@@ -494,6 +525,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 	                      <SidebarLink
 	                        active={pathname === "/einstellungen/integrationen" || pathname.startsWith("/einstellungen/integrationen/")}
 	                        collapsed={false}
+	                        dense={compactSidebar}
 	                        href="/einstellungen/integrationen"
 	                        icon={<DocumentsIcon className="h-4 w-4" />}
 	                        label="Integrationen"
@@ -504,107 +536,127 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 </nav>
 
                 <div className="mt-4 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setLightMode((previousValue) => !previousValue)}
-                    className={`mb-2 flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                      lightMode
-                        ? "bg-zinc-900 text-white hover:bg-zinc-800"
-                        : "bg-white/10 text-zinc-100 hover:bg-white/15"
-                    } ${sidebarCollapsed ? "justify-center px-2" : "justify-between"}`}
-                    title={sidebarCollapsed ? (lightMode ? "Darkmode" : "Lightmode") : undefined}
-                  >
-                    <span className="flex items-center gap-2">
-                    {lightMode ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />}
-                    {sidebarCollapsed ? null : lightMode ? "Darkmode" : "Lightmode"}
-                    </span>
-                    {sidebarCollapsed ? null : <span className="text-xs text-[#FF007F]">{lightMode ? "AN" : "AUS"}</span>}
-                  </button>
-
-                  <div
-                    className={`rounded-2xl ${
-                      sidebarCollapsed ? "p-1.5" : "p-2"
-                    } ${lightMode ? "bg-zinc-200 ring-1 ring-zinc-300" : "bg-white/5 ring-1 ring-white/10"}`}
-                  >
+                  {compactSidebar ? null : (
                     <button
                       type="button"
-                      onClick={() => {
-                        if (isLgUp) {
-                          setUserMenuOpen((previousValue) => !previousValue);
-                          return;
-                        }
-                        setSidebarFlyout((previousValue) => (previousValue === "user" ? null : "user"));
-                      }}
-                      className={`flex w-full items-center rounded-xl px-2 py-2 text-left transition ${
-                        lightMode ? "text-zinc-800 hover:bg-zinc-300" : "text-zinc-200 hover:bg-white/10"
-                      } ${sidebarCollapsed ? "justify-center px-1.5" : "gap-3"}`}
-                      title={sidebarCollapsed ? "Benutzer" : undefined}
+                      onClick={() => setLightMode((previousValue) => !previousValue)}
+                      className={`mb-2 flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                        lightMode
+                          ? "bg-zinc-900 text-white hover:bg-zinc-800"
+                          : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                      } ${sidebarCollapsed ? "justify-center px-2" : "justify-between"}`}
+                      title={sidebarCollapsed ? (lightMode ? "Darkmode" : "Lightmode") : undefined}
                     >
-                      <div
-                        className={`flex items-center justify-center rounded-full bg-[#FF007F] text-sm font-semibold text-white ${
-                          sidebarCollapsed ? "h-9 w-9" : "h-10 w-10"
-                        }`}
-                      >
+                      <span className="flex items-center gap-2">
+                        {lightMode ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />}
+                        {sidebarCollapsed ? null : lightMode ? "Darkmode" : "Lightmode"}
+                      </span>
+                      {sidebarCollapsed ? null : <span className="text-xs text-[#FF007F]">{lightMode ? "AN" : "AUS"}</span>}
+                    </button>
+                  )}
+
+                  {compactSidebar ? (
+                    <button
+                      type="button"
+                      onClick={() => setSidebarFlyout((previousValue) => (previousValue === "user" ? null : "user"))}
+                      className={`flex w-full items-center justify-center rounded-2xl p-2 transition ${
+                        lightMode ? "bg-zinc-200 ring-1 ring-zinc-300 hover:bg-zinc-300" : "bg-white/5 ring-1 ring-white/10 hover:bg-white/10"
+                      }`}
+                      aria-haspopup="dialog"
+                      aria-expanded={sidebarFlyout === "user"}
+                      aria-label="Benutzer-Menü öffnen"
+                      title="Benutzer"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF007F] text-sm font-semibold text-white">
                         {userInitials}
                       </div>
-                      {sidebarCollapsed ? null : (
-                        <>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">{sessionUser?.displayName ?? "Benutzer"}</p>
-                            <p className={`text-xs ${lightMode ? "text-zinc-500" : "text-zinc-400"}`}>
-                              {userRoleLabel}
-                              {sessionOrg?.name ? ` · ${sessionOrg.name}` : sessionOrg?.orgKey ? ` · ${sessionOrg.orgKey}` : ""}
-                            </p>
-                          </div>
-                          <ChevronIcon
-                            className={`h-4 w-4 transition ${userMenuOpen ? "rotate-180" : "rotate-0"} ${
-                              lightMode ? "text-zinc-500" : "text-zinc-400"
-                            }`}
-                          />
-                        </>
-                      )}
                     </button>
+                  ) : (
+                    <div
+                      className={`rounded-2xl ${
+                        sidebarCollapsed ? "p-1.5" : "p-2"
+                      } ${lightMode ? "bg-zinc-200 ring-1 ring-zinc-300" : "bg-white/5 ring-1 ring-white/10"}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isLgUp) {
+                            setUserMenuOpen((previousValue) => !previousValue);
+                            return;
+                          }
+                          setSidebarFlyout((previousValue) => (previousValue === "user" ? null : "user"));
+                        }}
+                        className={`flex w-full items-center rounded-xl px-2 py-2 text-left transition ${
+                          lightMode ? "text-zinc-800 hover:bg-zinc-300" : "text-zinc-200 hover:bg-white/10"
+                        } ${sidebarCollapsed ? "justify-center px-1.5" : "gap-3"}`}
+                        title={sidebarCollapsed ? "Benutzer" : undefined}
+                      >
+                        <div
+                          className={`flex items-center justify-center rounded-full bg-[#FF007F] text-sm font-semibold text-white ${
+                            sidebarCollapsed ? "h-9 w-9" : "h-10 w-10"
+                          }`}
+                        >
+                          {userInitials}
+                        </div>
+                        {sidebarCollapsed ? null : (
+                          <>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{sessionUser?.displayName ?? "Benutzer"}</p>
+                              <p className={`text-xs ${lightMode ? "text-zinc-500" : "text-zinc-400"}`}>
+                                {userRoleLabel}
+                                {sessionOrg?.name ? ` · ${sessionOrg.name}` : sessionOrg?.orgKey ? ` · ${sessionOrg.orgKey}` : ""}
+                              </p>
+                            </div>
+                            <ChevronIcon
+                              className={`h-4 w-4 transition ${userMenuOpen ? "rotate-180" : "rotate-0"} ${
+                                lightMode ? "text-zinc-500" : "text-zinc-400"
+                              }`}
+                            />
+                          </>
+                        )}
+                      </button>
 
-                    {userMenuOpen && !sidebarCollapsed && isLgUp ? (
-                      <div className="mt-2 grid gap-2 px-2 pb-2">
-                        <Link
-                          href="/einstellungen/profil"
-                          className={`rounded-lg px-3 py-2 text-left text-sm transition ${
-                            lightMode
-                              ? "bg-zinc-300 text-zinc-900 hover:bg-zinc-400"
-                              : "bg-white/10 text-zinc-100 hover:bg-white/15"
-                          }`}
-                        >
-                          Eigenen Benutzer bearbeiten
-                        </Link>
-                        <Link
-                          href="/einstellungen/benutzer"
-                          className={`rounded-lg px-3 py-2 text-left text-sm transition ${
-                            lightMode
-                              ? "bg-zinc-300 text-zinc-900 hover:bg-zinc-400"
-                              : "bg-white/10 text-zinc-100 hover:bg-white/15"
-                          }`}
-                        >
-                          Benutzer verwalten
-                        </Link>
-                        <Link
-                          href="/einstellungen/firma"
-                          className="rounded-lg bg-[#FF007F]/90 px-3 py-2 text-left text-sm font-medium text-white transition hover:bg-[#e30072]"
-                        >
-                          Firmendaten
-                        </Link>
-                      </div>
-                    ) : null}
-                  </div>
+                      {userMenuOpen && !sidebarCollapsed && isLgUp ? (
+                        <div className="mt-2 grid gap-2 px-2 pb-2">
+                          <Link
+                            href="/einstellungen/profil"
+                            className={`rounded-lg px-3 py-2 text-left text-sm transition ${
+                              lightMode
+                                ? "bg-zinc-300 text-zinc-900 hover:bg-zinc-400"
+                                : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                            }`}
+                          >
+                            Eigenen Benutzer bearbeiten
+                          </Link>
+                          <Link
+                            href="/einstellungen/benutzer"
+                            className={`rounded-lg px-3 py-2 text-left text-sm transition ${
+                              lightMode
+                                ? "bg-zinc-300 text-zinc-900 hover:bg-zinc-400"
+                                : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                            }`}
+                          >
+                            Benutzer verwalten
+                          </Link>
+                          <Link
+                            href="/einstellungen/firma"
+                            className="rounded-lg bg-[#FF007F]/90 px-3 py-2 text-left text-sm font-medium text-white transition hover:bg-[#e30072]"
+                          >
+                            Firmendaten
+                          </Link>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
 
                   <button
                     type="button"
                     onClick={() => void logout()}
-                    className={`mt-2 flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+                    className={`mt-2 flex w-full items-center rounded-xl text-left font-semibold transition ${
                       lightMode
                         ? "bg-white text-zinc-900 ring-1 ring-zinc-200 hover:bg-zinc-100"
                         : "bg-white/10 text-white ring-1 ring-white/10 hover:bg-white/15"
-                    } ${sidebarCollapsed ? "justify-center px-2" : "gap-3"}`}
+                    } ${compactSidebar ? "px-2 py-2 text-xs" : "px-3 py-2.5 text-sm"} ${sidebarCollapsed ? "justify-center" : "gap-3"}`}
                     aria-label="Logout"
                     title={sidebarCollapsed ? "Logout" : undefined}
                   >
@@ -615,19 +667,21 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setSidebarCollapsed((previousValue) => !previousValue)}
-                  className={`absolute -right-3 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border text-xs transition md:flex ${
-                    lightMode
-                      ? "border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-100"
-                      : "border-white/15 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
-                  }`}
-                  aria-label={sidebarCollapsed ? "Sidebar ausklappen" : "Sidebar einklappen"}
-                  title={sidebarCollapsed ? "Sidebar ausklappen" : "Sidebar einklappen"}
-                >
-                  <SideChevronIcon className={`h-3.5 w-3.5 ${sidebarCollapsed ? "rotate-180" : "rotate-0"}`} />
-                </button>
+                {compactSidebar ? null : (
+                  <button
+                    type="button"
+                    onClick={() => setSidebarCollapsed((previousValue) => !previousValue)}
+                    className={`absolute -right-3 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border text-xs transition md:flex ${
+                      lightMode
+                        ? "border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-100"
+                        : "border-white/15 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+                    }`}
+                    aria-label={sidebarCollapsed ? "Sidebar ausklappen" : "Sidebar einklappen"}
+                    title={sidebarCollapsed ? "Sidebar ausklappen" : "Sidebar einklappen"}
+                  >
+                    <SideChevronIcon className={`h-3.5 w-3.5 ${sidebarCollapsed ? "rotate-180" : "rotate-0"}`} />
+                  </button>
+                )}
               </aside>
 
               <section
