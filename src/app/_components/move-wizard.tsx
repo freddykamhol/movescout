@@ -2722,17 +2722,19 @@ function MoveWizardModal({
   }
 
   function renderCurrentStep() {
-    if (currentStep.id === "customer") {
-      return (
-        <section className={chrome.panel}>
-          <h3 className={chrome.sectionTitle}>Seite 1: Kundendaten</h3>
-          <p className={chrome.sectionText}>Firma, Anrede, Kontaktname und Anschrift des Kunden.</p>
-
-          <div className="mt-4 grid gap-3 lg:grid-cols-2">
-            <FieldLabel htmlFor="wizard-company" label="Firma" lightMode={lightMode}>
-              <input
-                id="wizard-company"
-                value={wizardData.customer.company}
+	    if (currentStep.id === "customer") {
+	      return (
+	        <section className={chrome.panel}>
+	          <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 1: Kundendaten</h3>
+	          <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
+	            Firma, Anrede, Kontaktname und Anschrift des Kunden.
+	          </p>
+	
+	          <div className="mt-3 grid gap-3 lg:mt-4 lg:grid-cols-2">
+	            <FieldLabel htmlFor="wizard-company" label="Firma" lightMode={lightMode}>
+	              <input
+	                id="wizard-company"
+	                value={wizardData.customer.company}
                 onChange={(event) => updateCustomerField("company", event.target.value)}
                 className={chrome.input}
                 placeholder="Firma"
@@ -2836,28 +2838,28 @@ function MoveWizardModal({
       );
     }
 
-    if (currentStep.id === "addresses") {
-      return (
-        <div className="grid gap-4">
-          <section className={chrome.panel}>
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-              <div>
-                <h3 className={chrome.sectionTitle}>Seite 2: Adressen</h3>
-                <p className={chrome.sectionText}>
-                  Auszug, optionale Zwischenstopps und Einzug mit denselben Detailfeldern.
-                </p>
-              </div>
-              <button type="button" onClick={addStopAddress} className={`${chrome.actionButton} inline-flex items-center gap-2`}>
-                <Plus className="h-4 w-4" />
-                Zwischenstopp hinzufügen
-              </button>
-            </div>
-
-            <div className="mt-4 grid gap-3 lg:grid-cols-4">
-              <div className={`${chrome.subtleInset} flex items-start gap-3`}>
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                  lightMode ? "bg-white text-[#FF007F] ring-1 ring-zinc-200" : "bg-zinc-950 text-[#ff8cc5] ring-1 ring-white/10"
-                }`}>
+	    if (currentStep.id === "addresses") {
+	      return (
+	        <div className="grid gap-4">
+	          <section className={chrome.panel}>
+	            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+	              <div>
+	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 2: Adressen</h3>
+	                <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
+	                  Auszug, optionale Zwischenstopps und Einzug mit denselben Detailfeldern.
+	                </p>
+	              </div>
+	              <button type="button" onClick={addStopAddress} className={`${chrome.actionButton} inline-flex items-center gap-2`}>
+	                <Plus className="h-4 w-4" />
+	                Zwischenstopp hinzufügen
+	              </button>
+	            </div>
+	
+	            <div className="mt-4 grid gap-3 lg:grid-cols-4 [@media(max-height:640px)]:hidden">
+	              <div className={`${chrome.subtleInset} flex items-start gap-3`}>
+	                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+	                  lightMode ? "bg-white text-[#FF007F] ring-1 ring-zinc-200" : "bg-zinc-950 text-[#ff8cc5] ring-1 ring-white/10"
+	                }`}>
                   <MapPin className="h-5 w-5" strokeWidth={1.9} />
                 </div>
                 <div>
@@ -3128,16 +3130,18 @@ function MoveWizardModal({
     }
 
     if (currentStep.id === "rooms") {
-      return (
-        <section className={chrome.panel}>
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h3 className={chrome.sectionTitle}>Seite 3: Raumauswahl</h3>
-              <p className={chrome.sectionText}>Mehrfachauswahl ist erlaubt. Jede Karte funktioniert wie eine Checkbox.</p>
-            </div>
-            <div className={`${chrome.compactSurfaceMuted} text-sm`}>
-              {selectedRoomCount > 0 ? `${selectedRoomCount} Räume ausgewählt` : "Noch keine Räume ausgewählt"}
-            </div>
+	      return (
+	        <section className={chrome.panel}>
+	          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+	            <div>
+	              <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 3: Raumauswahl</h3>
+	              <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
+	                Mehrfachauswahl ist erlaubt. Jede Karte funktioniert wie eine Checkbox.
+	              </p>
+	            </div>
+	            <div className={`${chrome.compactSurfaceMuted} text-sm`}>
+	              {selectedRoomCount > 0 ? `${selectedRoomCount} Räume ausgewählt` : "Noch keine Räume ausgewählt"}
+	            </div>
           </div>
 
           <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -3158,15 +3162,17 @@ function MoveWizardModal({
 
     if (currentStep.id === "furniture") {
       if (selectedRoomLabels.length === 0) {
-        return (
-          <section className={chrome.panel}>
-            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h3 className={chrome.sectionTitle}>Seite 4: Möbelauswahl</h3>
-                <p className={chrome.sectionText}>Die Möbelauswahl richtet sich nach den zuvor markierten Räumen.</p>
-              </div>
-              <div className={`${chrome.compactSurfaceMuted} text-sm`}>Noch keine Räume ausgewählt</div>
-            </div>
+	        return (
+	          <section className={chrome.panel}>
+	            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+	              <div>
+	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 4: Möbelauswahl</h3>
+	                <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
+	                  Die Möbelauswahl richtet sich nach den zuvor markierten Räumen.
+	                </p>
+	              </div>
+	              <div className={`${chrome.compactSurfaceMuted} text-sm`}>Noch keine Räume ausgewählt</div>
+	            </div>
 
             <div className={`mt-4 ${chrome.emptyState}`}>
               Bitte zuerst in der Raumauswahl mindestens einen Raum markieren. Danach erscheinen hier die passenden
@@ -3176,16 +3182,16 @@ function MoveWizardModal({
         );
       }
 
-      return (
-        <div className="grid gap-4">
-          <section className={chrome.panel}>
-            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h3 className={chrome.sectionTitle}>Seite 4: Möbelauswahl</h3>
-                <p className={chrome.sectionText}>
-                  Möbel nach gewählten Räumen hinzufügen, Standardmöbel übernehmen und Zusatzleistungen direkt markieren.
-                </p>
-              </div>
+	      return (
+	        <div className="grid gap-4">
+	          <section className={chrome.panel}>
+	            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+	              <div>
+	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 4: Möbelauswahl</h3>
+	                <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
+	                  Möbel nach gewählten Räumen hinzufügen, Standardmöbel übernehmen und Zusatzleistungen direkt markieren.
+	                </p>
+	              </div>
               <div className={`${chrome.compactSurfaceMuted} text-sm`}>
                 {wizardData.furnitureSelections.length > 0
                   ? `${wizardData.furnitureSelections.length} Möbelkarten angelegt`
@@ -3193,11 +3199,11 @@ function MoveWizardModal({
               </div>
             </div>
 
-            <div className="mt-4 grid gap-3 lg:grid-cols-3">
-              <div className={`${chrome.subtleInset} flex items-start gap-3`}>
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                  lightMode ? "bg-white text-[#FF007F] ring-1 ring-zinc-200" : "bg-zinc-950 text-[#ff8cc5] ring-1 ring-white/10"
-                }`}>
+	            <div className="mt-4 grid gap-3 lg:grid-cols-3 [@media(max-height:640px)]:hidden">
+	              <div className={`${chrome.subtleInset} flex items-start gap-3`}>
+	                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+	                  lightMode ? "bg-white text-[#FF007F] ring-1 ring-zinc-200" : "bg-zinc-950 text-[#ff8cc5] ring-1 ring-white/10"
+	                }`}>
                   <MapPin className="h-5 w-5" strokeWidth={1.9} />
                 </div>
                 <div>
@@ -3439,18 +3445,20 @@ function MoveWizardModal({
     if (currentStep.id === "extras") {
       const ceilingLampLineTotal = handymanLampPrice + handymanHeightSurcharge;
 
-      return (
-        <div className="grid gap-4">
-          <section className={chrome.panel}>
-            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h3 className={chrome.sectionTitle}>Seite 5: Zusatzleistungen Allgemein</h3>
-                <p className={chrome.sectionText}>Handwerk, Bohren und Verpackungsmaterial inkl. Ein- und Auspackservice.</p>
-              </div>
-              <div className={`${chrome.compactSurfaceMuted} text-sm`}>
-                {manualServicesTotalPrice > 0 ? `Zusatz: ${priceFormatter.format(manualServicesTotalPrice)}` : "Noch keine Zusatzleistungen"}
-              </div>
-            </div>
+	      return (
+	        <div className="grid gap-4">
+	          <section className={chrome.panel}>
+	            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+	              <div>
+	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 5: Zusatzleistungen Allgemein</h3>
+	                <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
+	                  Handwerk, Bohren und Verpackungsmaterial inkl. Ein- und Auspackservice.
+	                </p>
+	              </div>
+	              <div className={`${chrome.compactSurfaceMuted} text-sm`}>
+	                {manualServicesTotalPrice > 0 ? `Zusatz: ${priceFormatter.format(manualServicesTotalPrice)}` : "Noch keine Zusatzleistungen"}
+	              </div>
+	            </div>
 
             <div className="mt-5 grid gap-4 xl:grid-cols-2">
               <article className={chrome.subtlePanel}>
@@ -3584,17 +3592,19 @@ function MoveWizardModal({
       );
     }
 
-    if (currentStep.id === "kitchen") {
-      return (
-        <section className={chrome.panel}>
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h3 className={chrome.sectionTitle}>Seite 6: Küchenleistungen</h3>
-              <p className={chrome.sectionText}>Laufmeter Küche, Arbeitsplatten, E-Geräte und passende Optionen.</p>
-            </div>
-            <div className={`${chrome.compactSurfaceMuted} text-sm`}>
-              {kitchenTotalPrice > 0 ? `Küche: ${priceFormatter.format(kitchenTotalPrice)}` : "Keine Küchenleistungen ausgewählt"}
-            </div>
+	    if (currentStep.id === "kitchen") {
+	      return (
+	        <section className={chrome.panel}>
+	          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+	            <div>
+	              <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 6: Küchenleistungen</h3>
+	              <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
+	                Laufmeter Küche, Arbeitsplatten, E-Geräte und passende Optionen.
+	              </p>
+	            </div>
+	            <div className={`${chrome.compactSurfaceMuted} text-sm`}>
+	              {kitchenTotalPrice > 0 ? `Küche: ${priceFormatter.format(kitchenTotalPrice)}` : "Keine Küchenleistungen ausgewählt"}
+	            </div>
           </div>
 
           <div className="mt-5 grid gap-4 xl:grid-cols-2">
@@ -3730,14 +3740,16 @@ function MoveWizardModal({
             routeCalculationData.pricing.disposalPrice
           : 0;
 
-      return (
-        <div className="grid gap-4">
-          <section className={chrome.panel}>
-            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h3 className={chrome.sectionTitle}>Seite 7: Zusammenfassung</h3>
-                <p className={chrome.sectionText}>Alle Posten aus Route, Möbeln, Zusatzleistungen und Küche.</p>
-              </div>
+	      return (
+	        <div className="grid gap-4">
+	          <section className={chrome.panel}>
+	            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+	              <div>
+	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 7: Zusammenfassung</h3>
+	                <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
+	                  Alle Posten aus Route, Möbeln, Zusatzleistungen und Küche.
+	                </p>
+	              </div>
               <div className="flex flex-wrap items-center justify-end gap-2">
                 <div className={`${chrome.compactSurfaceMuted} text-sm`}>
                   Gesamt: {routeCalculationData ? priceFormatter.format(grandTotalPrice) : "Route fehlt (nur Zusatzleistungen sichtbar)"}
@@ -3979,7 +3991,34 @@ function MoveWizardModal({
         }`}
       >
         <header className={`border-b px-4 py-4 sm:px-5 sm:py-5 md:px-6 [@media(max-height:640px)]:px-4 [@media(max-height:640px)]:py-3 ${lightMode ? "border-zinc-200" : "border-white/10"}`}>
-		          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+		          <div className="hidden [@media(max-height:640px)]:flex items-center justify-between gap-3">
+		            <div className="min-w-0">
+		              <p className="truncate text-sm font-semibold">
+		                {editingMoveMeta ? editingMoveMeta.moveNumber : "Neuer Umzug"}
+		              </p>
+		              <p className={`mt-0.5 truncate text-[11px] uppercase tracking-[0.18em] ${chrome.overline}`}>
+		                {currentStep.title}
+		              </p>
+		            </div>
+
+		            <div className="flex items-center gap-2">
+		              <span className="shrink-0 text-sm font-semibold text-[#FF007F]">{livePriceLabel}</span>
+		              <button
+		                type="button"
+		                onClick={onClose}
+		                className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border text-sm transition ${
+		                  lightMode
+		                    ? "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+		                    : "border-white/10 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
+		                }`}
+		                aria-label="Schließen"
+		              >
+		                ✕
+		              </button>
+		            </div>
+		          </div>
+
+		          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between [@media(max-height:640px)]:hidden">
 		            <div>
 		              <p className="text-xs uppercase tracking-[0.2em] text-[#FF007F]">{editingMoveMeta ? "Umzug bearbeiten" : "Umzug anlegen"}</p>
 		              <h2 className="mt-2 text-2xl font-semibold [@media(max-height:640px)]:mt-1 [@media(max-height:640px)]:text-xl">
@@ -3992,7 +4031,7 @@ function MoveWizardModal({
 		            </div>
 
 	            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-3">
-	              <div className={`${chrome.heroAccentCard} [@media(max-height:640px)]:px-3 [@media(max-height:640px)]:py-2`}>
+	              <div className={`${chrome.heroAccentCard} [@media(max-height:640px)]:hidden`}>
 	                <p className={`${chrome.heroAccentEyebrow} [@media(max-height:640px)]:text-[11px]`}>Live-Preisanzeige</p>
 	                <p className={`text-[#FF007F] [@media(max-height:640px)]:mt-1 [@media(max-height:640px)]:text-base md:text-lg font-semibold`}>
 	                  {livePriceLabel}
@@ -4130,7 +4169,7 @@ function MoveWizardModal({
 		          </div>
 	        </header>
 
-	        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5 md:px-6">
+	        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-5 md:px-6 [@media(max-height:640px)]:py-2">
 	          {renderCurrentStep()}
 	        </div>
 

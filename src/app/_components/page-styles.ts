@@ -26,10 +26,12 @@ export function getPageChrome(lightMode: boolean) {
     statValue: `mt-2 text-3xl font-semibold ${bodyText}`,
     statAccentValue: "mt-2 text-3xl font-semibold text-[#FF007F]",
     statHint: `mt-1 text-sm ${mutedText}`,
-    panel: `rounded-2xl p-4 ${lightMode ? "bg-white ring-1 ring-zinc-200" : "bg-zinc-950 ring-1 ring-white/10"}`,
+    panel: `rounded-2xl p-3 sm:p-4 ${lightMode ? "bg-white ring-1 ring-zinc-200" : "bg-zinc-950 ring-1 ring-white/10"}`,
     panelRoomy: `rounded-2xl p-5 sm:p-6 ${lightMode ? "bg-white ring-1 ring-zinc-200" : "bg-zinc-950 ring-1 ring-white/10"}`,
-    subtlePanel: `rounded-2xl p-4 ${lightMode ? "bg-zinc-50 ring-1 ring-zinc-200" : "bg-zinc-900 ring-1 ring-white/10"}`,
-    subtleInset: `rounded-xl px-4 py-3 ${lightMode ? "bg-zinc-50 ring-1 ring-zinc-200" : "bg-zinc-900 ring-1 ring-white/10"}`,
+    subtlePanel: `rounded-2xl p-3 sm:p-4 ${lightMode ? "bg-zinc-50 ring-1 ring-zinc-200" : "bg-zinc-900 ring-1 ring-white/10"}`,
+    subtleInset: `rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 ${
+      lightMode ? "bg-zinc-50 ring-1 ring-zinc-200" : "bg-zinc-900 ring-1 ring-white/10"
+    }`,
     compactSurface: `rounded-lg px-3 py-2 ${lightMode ? "bg-zinc-100 text-zinc-900 ring-1 ring-zinc-200" : "bg-zinc-800 text-zinc-100 ring-1 ring-white/5"}`,
     compactSurfaceMuted: `rounded-lg px-3 py-2 ${
       lightMode ? "bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200" : "bg-zinc-900 text-zinc-300 ring-1 ring-white/10"
