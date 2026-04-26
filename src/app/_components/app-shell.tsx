@@ -213,6 +213,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<null | "settings" | "user">(null);
+  const [sidebarFlyout, setSidebarFlyout] = useState<null | "settings" | "user">(null);
+  const [isLgUp, setIsLgUp] = useState(false);
   const [lightMode, setLightMode] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sessionUser, setSessionUser] = useState<{ displayName: string; role: string } | null>(null);
@@ -278,6 +280,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
   }, [pathname, router]);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const onChange = () => setIsLgUp(mediaQuery.matches);
+    onChange();
+    mediaQuery.addEventListener("change", onChange);
+    return () => {
+      mediaQuery.removeEventListener("change", onChange);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!mobilePanel) {
       return;
     }
@@ -289,6 +301,18 @@ export default function AppShell({ children }: { children: ReactNode }) {
     };
   }, [mobilePanel]);
 
+  useEffect(() => {
+    if (!sidebarFlyout) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [sidebarFlyout]);
+
   async function logout() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -297,6 +321,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     } finally {
       setMobilePanel(null);
       setUserMenuOpen(false);
+      setSidebarFlyout(null);
       router.push("/login");
       router.refresh();
     }
@@ -358,7 +383,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 }`}
               >
                 <div
-                  className={`rounded-2xl p-4 ring-1 ring-[#FF007F]/40 ${
+                  className={`rounded-2xl p-3 ring-1 ring-[#FF007F]/40 lg:p-4 ${
                     lightMode ? "bg-[#FF007F]/10" : "bg-[#FF007F]/15"
                   }`}
                 >
@@ -372,7 +397,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   )}
                 </div>
 
-                <nav className="mt-5 flex-1 space-y-1 overflow-y-auto pr-1">
+                <nav className="mt-4 flex-1 space-y-1 overflow-y-hidden pr-1 lg:overflow-y-auto">
                   <SidebarLink
                     active={activePage === "dashboard"}
                     collapsed={sidebarCollapsed}
@@ -408,7 +433,14 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
                   <button
                     type="button"
-                    onClick={() => setSettingsOpen((previousValue) => !previousValue)}
+                    onClick={() => {
+                      if (isLgUp) {
+                        setSettingsOpen((previousValue) => !previousValue);
+                        return;
+                      }
+                      setSidebarFlyout((previousValue) => (previousValue === "settings" ? null : "settings"));
+                      setUserMenuOpen(false);
+                    }}
                     className={settingsButtonClass}
                     title={sidebarCollapsed ? "Einstellungen" : undefined}
                   >
@@ -425,7 +457,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                     )}
                   </button>
 
-                  {settingsOpen && !sidebarCollapsed ? (
+                  {settingsOpen && !sidebarCollapsed && isLgUp ? (
                     <div className={`ml-4 mt-1 space-y-1 border-l pl-3 ${lightMode ? "border-zinc-300" : "border-white/10"}`}>
                       <SidebarLink
                         active={pathname === "/einstellungen" || pathname === "/einstellungen/preise" || pathname.startsWith("/einstellungen/preise/")}
@@ -496,7 +528,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   >
                     <button
                       type="button"
-                      onClick={() => setUserMenuOpen((previousValue) => !previousValue)}
+                      onClick={() => {
+                        if (isLgUp) {
+                          setUserMenuOpen((previousValue) => !previousValue);
+                          return;
+                        }
+                        setSidebarFlyout((previousValue) => (previousValue === "user" ? null : "user"));
+                      }}
                       className={`flex w-full items-center rounded-xl px-2 py-2 text-left transition ${
                         lightMode ? "text-zinc-800 hover:bg-zinc-300" : "text-zinc-200 hover:bg-white/10"
                       } ${sidebarCollapsed ? "justify-center px-1.5" : "gap-3"}`}
@@ -527,7 +565,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                       )}
                     </button>
 
-                    {userMenuOpen && !sidebarCollapsed ? (
+                    {userMenuOpen && !sidebarCollapsed && isLgUp ? (
                       <div className="mt-2 grid gap-2 px-2 pb-2">
                         <Link
                           href="/einstellungen/profil"
@@ -600,6 +638,179 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 {children}
               </section>
             </div>
+
+            {sidebarFlyout && !isLgUp ? (
+              <div className="fixed inset-0 z-50 hidden md:block lg:hidden" role="dialog" aria-modal="true">
+                <button
+                  type="button"
+                  className="absolute inset-0 bg-black/40"
+                  onClick={() => setSidebarFlyout(null)}
+                  aria-label="Untermenü schließen"
+                />
+                <aside
+                  className={`absolute bottom-4 top-4 overflow-hidden rounded-3xl shadow-2xl ring-1 ${
+                    lightMode ? "bg-white text-zinc-900 ring-zinc-200" : "bg-zinc-950 text-zinc-100 ring-white/10"
+                  } ${sidebarCollapsed ? "left-[calc(1rem+6rem+1rem)]" : "left-[calc(1rem+18rem+1rem)]"} right-4 w-[min(26rem,calc(100vw-10rem))]`}
+                >
+                  <div className={`flex items-center justify-between gap-3 border-b px-4 py-3 ${lightMode ? "border-zinc-200" : "border-white/10"}`}>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.22em] text-[#FF007F]">
+                        {sidebarFlyout === "settings" ? "Einstellungen" : "Benutzer"}
+                      </p>
+                      <p className={`mt-1 text-sm ${lightMode ? "text-zinc-600" : "text-zinc-300"}`}>
+                        {sessionOrg?.name ? sessionOrg.name : sessionOrg?.orgKey ? sessionOrg.orgKey : ""}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSidebarFlyout(null)}
+                      className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl border transition ${
+                        lightMode ? "border-zinc-200 hover:bg-zinc-100" : "border-white/10 hover:bg-white/10"
+                      }`}
+                      aria-label="Schließen"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="h-full overflow-y-auto p-4">
+                    {sidebarFlyout === "settings" ? (
+                      <div className="grid gap-2">
+                        <Link
+                          href="/einstellungen/preise"
+                          onClick={() => setSidebarFlyout(null)}
+                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                          }`}
+                        >
+                          Preise
+                        </Link>
+                        <Link
+                          href="/einstellungen/firma"
+                          onClick={() => setSidebarFlyout(null)}
+                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                          }`}
+                        >
+                          Firmendaten
+                        </Link>
+                        <Link
+                          href="/einstellungen/benutzer"
+                          onClick={() => setSidebarFlyout(null)}
+                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                          }`}
+                        >
+                          Benutzer
+                        </Link>
+                        <Link
+                          href="/einstellungen/organigramm"
+                          onClick={() => setSidebarFlyout(null)}
+                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                          }`}
+                        >
+                          Organigramm
+                        </Link>
+                        <Link
+                          href="/einstellungen/integrationen"
+                          onClick={() => setSidebarFlyout(null)}
+                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                          }`}
+                        >
+                          Integrationen
+                        </Link>
+
+                        <button
+                          type="button"
+                          onClick={() => setLightMode((previousValue) => !previousValue)}
+                          className={`mt-2 flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                            lightMode ? "bg-zinc-900 text-white hover:bg-zinc-800" : "bg-[#FF007F] text-white hover:bg-[#e30072]"
+                          }`}
+                        >
+                          <span className="inline-flex items-center gap-2">
+                            {lightMode ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />}
+                            {lightMode ? "Darkmode" : "Lightmode"}
+                          </span>
+                          <span className="text-xs text-white/80">{lightMode ? "AN" : "AUS"}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => void logout()}
+                          className={`mt-2 flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                            lightMode
+                              ? "bg-white text-zinc-900 ring-1 ring-zinc-200 hover:bg-zinc-100"
+                              : "bg-white/10 text-white ring-1 ring-white/10 hover:bg-white/15"
+                          }`}
+                        >
+                          <span className="inline-flex items-center gap-2">
+                            <span className="text-[#FF007F]">
+                              <LogoutIcon className="h-5 w-5" />
+                            </span>
+                            Logout
+                          </span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid gap-2">
+                        <Link
+                          href="/einstellungen/profil"
+                          onClick={() => setSidebarFlyout(null)}
+                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                          }`}
+                        >
+                          Eigenen Benutzer bearbeiten
+                        </Link>
+                        <Link
+                          href="/einstellungen/benutzer"
+                          onClick={() => setSidebarFlyout(null)}
+                          className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                            lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                          }`}
+                        >
+                          Benutzer verwalten
+                        </Link>
+                        <Link
+                          href="/einstellungen/firma"
+                          onClick={() => setSidebarFlyout(null)}
+                          className="rounded-2xl bg-[#FF007F]/90 px-4 py-3 text-sm font-medium text-white transition hover:bg-[#e30072]"
+                        >
+                          Firmendaten
+                        </Link>
+                        <div
+                          className={`mt-2 rounded-2xl p-4 ${
+                            lightMode ? "bg-zinc-50 ring-1 ring-zinc-200" : "bg-white/5 ring-1 ring-white/10"
+                          }`}
+                        >
+                          <p className="text-sm font-semibold">{sessionUser?.displayName ?? "Benutzer"}</p>
+                          <p className={`mt-1 text-xs ${lightMode ? "text-zinc-600" : "text-zinc-300"}`}>{userRoleLabel}</p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => void logout()}
+                          className={`mt-2 flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                            lightMode
+                              ? "bg-white text-zinc-900 ring-1 ring-zinc-200 hover:bg-zinc-100"
+                              : "bg-white/10 text-white ring-1 ring-white/10 hover:bg-white/15"
+                          }`}
+                        >
+                          <span className="inline-flex items-center gap-2">
+                            <span className="text-[#FF007F]">
+                              <LogoutIcon className="h-5 w-5" />
+                            </span>
+                            Logout
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </aside>
+              </div>
+            ) : null}
 
             <nav
               className={`fixed bottom-3 left-3 right-3 z-50 grid grid-cols-6 gap-2 rounded-3xl p-2 shadow-xl md:hidden ${
