@@ -4,8 +4,8 @@ export function getPageChrome(lightMode: boolean) {
   const bodyText = lightMode ? "text-zinc-900" : "text-white";
 
   return {
-    page: "mx-auto flex w-full max-w-6xl flex-col gap-4",
-    hero: `rounded-2xl p-6 ${
+    page: "mx-auto flex w-full max-w-6xl flex-col gap-4 px-3 sm:px-4",
+    hero: `rounded-2xl p-5 sm:p-6 ${
       lightMode
         ? "bg-gradient-to-r from-zinc-50 via-white to-zinc-50 ring-1 ring-zinc-200"
         : "bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 ring-1 ring-white/10"
@@ -27,7 +27,7 @@ export function getPageChrome(lightMode: boolean) {
     statAccentValue: "mt-2 text-3xl font-semibold text-[#FF007F]",
     statHint: `mt-1 text-sm ${mutedText}`,
     panel: `rounded-2xl p-4 ${lightMode ? "bg-white ring-1 ring-zinc-200" : "bg-zinc-950 ring-1 ring-white/10"}`,
-    panelRoomy: `rounded-2xl p-6 ${lightMode ? "bg-white ring-1 ring-zinc-200" : "bg-zinc-950 ring-1 ring-white/10"}`,
+    panelRoomy: `rounded-2xl p-5 sm:p-6 ${lightMode ? "bg-white ring-1 ring-zinc-200" : "bg-zinc-950 ring-1 ring-white/10"}`,
     subtlePanel: `rounded-2xl p-4 ${lightMode ? "bg-zinc-50 ring-1 ring-zinc-200" : "bg-zinc-900 ring-1 ring-white/10"}`,
     subtleInset: `rounded-xl px-4 py-3 ${lightMode ? "bg-zinc-50 ring-1 ring-zinc-200" : "bg-zinc-900 ring-1 ring-white/10"}`,
     compactSurface: `rounded-lg px-3 py-2 ${lightMode ? "bg-zinc-100 text-zinc-900 ring-1 ring-zinc-200" : "bg-zinc-800 text-zinc-100 ring-1 ring-white/5"}`,

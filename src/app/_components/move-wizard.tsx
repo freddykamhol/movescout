@@ -3958,7 +3958,7 @@ function MoveWizardModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-3 md:p-6">
       <button
         type="button"
         aria-label="Modal schließen"
@@ -3967,77 +3967,77 @@ function MoveWizardModal({
       />
 
       <div
-        className={`relative z-10 flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] ${
+        className={`relative z-10 flex max-h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] ${
           lightMode ? "bg-zinc-100 text-zinc-900 ring-1 ring-zinc-300" : "bg-zinc-950 text-zinc-100 ring-1 ring-white/10"
         }`}
       >
-        <header className={`border-b px-5 py-5 md:px-6 ${lightMode ? "border-zinc-200" : "border-white/10"}`}>
-	          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-	            <div>
-	              <p className="text-xs uppercase tracking-[0.2em] text-[#FF007F]">{editingMoveMeta ? "Umzug bearbeiten" : "Umzug anlegen"}</p>
-	              <h2 className="mt-2 text-2xl font-semibold">{editingMoveMeta ? editingMoveMeta.moveNumber : "Neuer Umzug"}</h2>
-	              <p className={`mt-1 max-w-3xl text-sm ${chrome.mutedText}`}>
-	                {currentStep.title} | Aufruf aus {sourceLabel}
-	                {customerNumber ? ` | Kunde ${customerNumber}` : ""}
-	              </p>
+        <header className={`border-b px-4 py-4 sm:px-5 sm:py-5 md:px-6 ${lightMode ? "border-zinc-200" : "border-white/10"}`}>
+		          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+		            <div>
+		              <p className="text-xs uppercase tracking-[0.2em] text-[#FF007F]">{editingMoveMeta ? "Umzug bearbeiten" : "Umzug anlegen"}</p>
+		              <h2 className="mt-2 text-2xl font-semibold">{editingMoveMeta ? editingMoveMeta.moveNumber : "Neuer Umzug"}</h2>
+		              <p className={`mt-1 max-w-3xl text-sm ${chrome.mutedText}`}>
+		                {currentStep.title} | Aufruf aus {sourceLabel}
+		                {customerNumber ? ` | Kunde ${customerNumber}` : ""}
+		              </p>
+		            </div>
+
+	            <div className="flex items-start gap-3">
+	              <div className={chrome.heroAccentCard}>
+	                <p className={chrome.heroAccentEyebrow}>Live-Preisanzeige</p>
+	                <p className={chrome.heroAccentValue}>{livePriceLabel}</p>
+	              </div>
+	              <button type="button" onClick={onClose} className={chrome.secondaryButton}>
+	                Schließen
+	              </button>
 	            </div>
+	          </div>
 
-            <div className="flex items-start gap-3">
-              <div className={chrome.heroAccentCard}>
-                <p className={chrome.heroAccentEyebrow}>Live-Preisanzeige</p>
-                <p className={chrome.heroAccentValue}>{livePriceLabel}</p>
-              </div>
-              <button type="button" onClick={onClose} className={chrome.secondaryButton}>
-                Schließen
-              </button>
-            </div>
-          </div>
+	          <div
+	            className="mt-4 flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] xl:grid xl:snap-none xl:grid-cols-2 xl:overflow-visible xl:pb-0 xl:[grid-template-columns:repeat(var(--wizard-steps),minmax(0,1fr))]"
+	            style={{ ["--wizard-steps" as never]: visibleWizardSteps.length }}
+	          >
+	            {visibleWizardSteps.map((step, visibleIndex) => {
+	              const stepIndex = wizardSteps.findIndex((candidate) => candidate.id === step.id);
+	              const isActive = step.id === currentStep.id;
+	              const isCompleted = stepIndex >= 0 && currentStepIndex >= 0 ? stepIndex < currentStepIndex : false;
 
-          <div
-            className="mt-5 grid grid-cols-2 gap-2 md:[grid-template-columns:repeat(var(--wizard-steps),minmax(0,1fr))]"
-            style={{ ["--wizard-steps" as never]: visibleWizardSteps.length }}
-          >
-            {visibleWizardSteps.map((step, visibleIndex) => {
-              const stepIndex = wizardSteps.findIndex((candidate) => candidate.id === step.id);
-              const isActive = step.id === currentStep.id;
-              const isCompleted = stepIndex >= 0 && currentStepIndex >= 0 ? stepIndex < currentStepIndex : false;
-
-              return (
-                <button
-                  key={step.id}
-                  type="button"
-                  onClick={() => setCurrentStepId(step.id)}
-                  className={`rounded-2xl px-3 py-3 text-left transition ${
-                    isActive
-                      ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/20"
-                      : isCompleted
-                        ? lightMode
-                          ? "bg-[#FF007F]/10 text-zinc-900 ring-1 ring-[#FF007F]/20"
+	              return (
+	                <button
+	                  key={step.id}
+	                  type="button"
+	                  onClick={() => setCurrentStepId(step.id)}
+	                  className={`min-w-[190px] shrink-0 snap-start rounded-2xl px-3 py-3 text-left transition xl:min-w-0 xl:shrink ${
+	                    isActive
+	                      ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/20"
+	                      : isCompleted
+	                        ? lightMode
+	                          ? "bg-[#FF007F]/10 text-zinc-900 ring-1 ring-[#FF007F]/20"
                           : "bg-[#FF007F]/12 text-zinc-100 ring-1 ring-[#FF007F]/25"
                         : lightMode
                           ? "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
                           : "bg-zinc-900 text-zinc-300 ring-1 ring-white/10 hover:bg-zinc-800"
-                  }`}
-                >
-                  <p className={`text-[11px] uppercase tracking-[0.16em] ${isActive ? "text-white/75" : "text-[#FF007F]"}`}>
-                    Seite {visibleIndex + 1}
-                  </p>
-                  <p className="mt-1 text-sm font-medium">{step.title}</p>
-                </button>
-              );
-            })}
-          </div>
-        </header>
+	                  }`}
+	                >
+	                  <p className={`text-[11px] uppercase tracking-[0.16em] ${isActive ? "text-white/75" : "text-[#FF007F]"}`}>
+	                    Seite {visibleIndex + 1}
+	                  </p>
+	                  <p className="mt-1 text-sm font-medium">{step.title}</p>
+	                </button>
+	              );
+	            })}
+	          </div>
+	        </header>
 
-        <div className="overflow-y-auto px-5 py-5 md:px-6">
-          {renderCurrentStep()}
-        </div>
+	        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5 md:px-6">
+	          {renderCurrentStep()}
+	        </div>
 
-        <footer className={`flex flex-col gap-3 border-t px-5 py-4 md:flex-row md:items-center md:justify-between md:px-6 ${lightMode ? "border-zinc-200" : "border-white/10"}`}>
-          <div className={`${chrome.compactSurfaceMuted} text-sm`}>
-            {currentStep.id === "rooms"
-              ? `${selectedRoomCount} Räume aktuell markiert`
-              : currentStep.id === "addresses"
+	        <footer className={`flex flex-col gap-3 border-t px-4 py-3 sm:px-5 sm:py-4 md:flex-row md:items-center md:justify-between md:px-6 ${lightMode ? "border-zinc-200" : "border-white/10"}`}>
+	          <div className={`${chrome.compactSurfaceMuted} text-sm`}>
+	            {currentStep.id === "rooms"
+	              ? `${selectedRoomCount} Räume aktuell markiert`
+	              : currentStep.id === "addresses"
                 ? routeCalculationData
                   ? `${routeDistanceLabel} | ${livePriceLabel} live kalkuliert`
                   : `${wizardData.stopAddresses.length} Zwischenstopps angelegt`
