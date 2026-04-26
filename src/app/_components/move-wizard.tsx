@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -1112,26 +1113,22 @@ function RoomSelectionButton({
   onToggle: () => void;
 }) {
   return (
-    <label
-      className="block"
-      onMouseDown={(event) => {
-        event.preventDefault();
-      }}
+    <button
+      type="button"
+      aria-pressed={isSelected}
+      onClick={onToggle}
+      className={`flex min-h-[11.5rem] w-full cursor-pointer flex-col items-center justify-between rounded-2xl border-2 p-5 text-center transition focus-visible:ring-2 focus-visible:ring-[#FF007F]/35 ${
+        lightMode ? "focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-100" : "focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+      } ${
+        isSelected
+          ? lightMode
+            ? "border-[#FF007F] bg-[#FF007F]/8 text-zinc-900 shadow-lg shadow-[#FF007F]/10"
+            : "border-[#FF007F] bg-[#FF007F]/12 text-zinc-100 shadow-lg shadow-[#FF007F]/15"
+          : lightMode
+            ? "border-zinc-200 bg-white text-zinc-900 hover:border-[#FF007F]/35 hover:bg-zinc-50"
+            : "border-white/10 bg-zinc-950 text-zinc-100 hover:border-[#FF007F]/30 hover:bg-zinc-900"
+      }`}
     >
-      <input type="checkbox" checked={isSelected} onChange={onToggle} className="peer sr-only" />
-      <span
-        className={`flex min-h-[11.5rem] cursor-pointer flex-col items-center justify-between rounded-2xl border-2 p-5 text-center transition peer-focus-visible:ring-2 peer-focus-visible:ring-[#FF007F]/35 ${
-          lightMode ? "peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-zinc-100" : "peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-zinc-950"
-        } ${
-          isSelected
-            ? lightMode
-              ? "border-[#FF007F] bg-[#FF007F]/8 text-zinc-900 shadow-lg shadow-[#FF007F]/10"
-              : "border-[#FF007F] bg-[#FF007F]/12 text-zinc-100 shadow-lg shadow-[#FF007F]/15"
-            : lightMode
-              ? "border-zinc-200 bg-white text-zinc-900 hover:border-[#FF007F]/35 hover:bg-zinc-50"
-              : "border-white/10 bg-zinc-950 text-zinc-100 hover:border-[#FF007F]/30 hover:bg-zinc-900"
-        }`}
-      >
         <div
           className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border ${
             isSelected
@@ -1151,8 +1148,7 @@ function RoomSelectionButton({
             {isSelected ? "Aktiv" : "Inaktiv"}
           </p>
         </div>
-      </span>
-    </label>
+    </button>
   );
 }
 
@@ -1171,6 +1167,8 @@ function MoveWizardModal({
   const [currentStepId, setCurrentStepId] = useState(baseWizardSteps[0]?.id ?? "customer");
   const [stepMenuOpen, setStepMenuOpen] = useState(false);
   const [wizardData, setWizardData] = useState(() => buildInitialWizardData(options));
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const pendingScrollTopRef = useRef<number | null>(null);
   const [editingMoveMeta, setEditingMoveMeta] = useState<{
     customerId: string;
     customerName: string;
@@ -1576,6 +1574,15 @@ function MoveWizardModal({
     };
   }, [onClose]);
 
+  useLayoutEffect(() => {
+    const pending = pendingScrollTopRef.current;
+    if (pending === null) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    container.scrollTop = pending;
+    pendingScrollTopRef.current = null;
+  }, [wizardData.roomSelections]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -1823,6 +1830,7 @@ function MoveWizardModal({
   function toggleRoomSelection(roomId: string) {
     const roomLabel = roomOptions.find((room) => room.id === roomId)?.label;
 
+    pendingScrollTopRef.current = scrollContainerRef.current?.scrollTop ?? null;
     setWizardData((currentData) => ({
       ...currentData,
       roomSelections: currentData.roomSelections.includes(roomId)
@@ -4174,7 +4182,10 @@ function MoveWizardModal({
 		          </div>
 	        </header>
 
-	        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-5 md:px-6 [@media(max-height:640px)]:py-2">
+	        <div
+	          ref={scrollContainerRef}
+	          className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-5 md:px-6 [@media(max-height:640px)]:py-2"
+	        >
 	          {renderCurrentStep()}
 	        </div>
 
