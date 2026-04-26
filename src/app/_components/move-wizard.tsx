@@ -1112,7 +1112,12 @@ function RoomSelectionButton({
   onToggle: () => void;
 }) {
   return (
-    <label className="block">
+    <label
+      className="block"
+      onMouseDown={(event) => {
+        event.preventDefault();
+      }}
+    >
       <input type="checkbox" checked={isSelected} onChange={onToggle} className="peer sr-only" />
       <span
         className={`flex min-h-[11.5rem] cursor-pointer flex-col items-center justify-between rounded-2xl border-2 p-5 text-center transition peer-focus-visible:ring-2 peer-focus-visible:ring-[#FF007F]/35 ${
