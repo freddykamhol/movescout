@@ -101,6 +101,15 @@ function SideChevronIcon({ className = "h-4 w-4" }: IconProps) {
   );
 }
 
+function LogoutIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M10 17l1 1 9-9-9-9-1 1 8 8-8 8Z" />
+      <path d="M4 21V3h7v2H6v14h5v2H4Z" />
+    </svg>
+  );
+}
+
 type SidebarLinkProps = {
   active?: boolean;
   collapsed: boolean;
@@ -280,6 +289,19 @@ export default function AppShell({ children }: { children: ReactNode }) {
     };
   }, [mobilePanel]);
 
+  async function logout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // ignore
+    } finally {
+      setMobilePanel(null);
+      setUserMenuOpen(false);
+      router.push("/login");
+      router.refresh();
+    }
+  }
+
   const displayName = sessionUser?.displayName?.trim() ?? "";
   const userInitials = (() => {
     if (!displayName) {
@@ -321,14 +343,14 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </div>
         {showSidebar ? (
           <main
-            className={`min-h-screen w-full p-3 pb-24 md:p-4 md:pb-28 lg:pb-4 ${
+            className={`min-h-screen w-full p-3 pb-24 md:p-4 md:pb-4 ${
               lightMode ? "bg-zinc-100 text-zinc-900" : "bg-zinc-950 text-zinc-100"
             }`}
           >
-            <div className="flex w-full flex-col gap-4 lg:flex-row">
+            <div className="flex w-full flex-col gap-4 md:flex-row">
               <aside
-                className={`relative hidden w-full flex-col rounded-3xl transition-all duration-300 lg:flex lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:shrink-0 lg:self-start ${
-                  sidebarCollapsed ? "p-3 lg:w-24" : "p-4 lg:w-72"
+                className={`relative hidden w-full flex-col rounded-3xl transition-all duration-300 md:flex md:sticky md:top-4 md:h-[calc(100vh-2rem)] md:shrink-0 md:self-start ${
+                  sidebarCollapsed ? "p-3 md:w-24" : "p-4 md:w-72"
                 } ${
                   lightMode
                     ? "bg-gradient-to-b from-zinc-200 to-zinc-100 ring-1 ring-zinc-300"
@@ -536,12 +558,29 @@ export default function AppShell({ children }: { children: ReactNode }) {
                       </div>
                     ) : null}
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => void logout()}
+                    className={`mt-2 flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+                      lightMode
+                        ? "bg-white text-zinc-900 ring-1 ring-zinc-200 hover:bg-zinc-100"
+                        : "bg-white/10 text-white ring-1 ring-white/10 hover:bg-white/15"
+                    } ${sidebarCollapsed ? "justify-center px-2" : "gap-3"}`}
+                    aria-label="Logout"
+                    title={sidebarCollapsed ? "Logout" : undefined}
+                  >
+                    <span className="text-[#FF007F]">
+                      <LogoutIcon className="h-5 w-5" />
+                    </span>
+                    {sidebarCollapsed ? null : <span>Logout</span>}
+                  </button>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setSidebarCollapsed((previousValue) => !previousValue)}
-                  className={`absolute -right-3 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border text-xs transition lg:flex ${
+                  className={`absolute -right-3 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border text-xs transition md:flex ${
                     lightMode
                       ? "border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-100"
                       : "border-white/15 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
@@ -563,7 +602,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             </div>
 
             <nav
-              className={`fixed bottom-3 left-3 right-3 z-50 grid grid-cols-6 gap-2 rounded-3xl p-2 shadow-xl lg:hidden ${
+              className={`fixed bottom-3 left-3 right-3 z-50 grid grid-cols-6 gap-2 rounded-3xl p-2 shadow-xl md:hidden ${
                 lightMode ? "bg-white/95 ring-1 ring-zinc-200" : "bg-zinc-950/90 ring-1 ring-white/10"
               }`}
               aria-label="Hauptmenü"
@@ -659,7 +698,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             </nav>
 
             {mobilePanel ? (
-              <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
+              <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true">
                 <button
                   type="button"
                   className="absolute inset-0 bg-black/55 backdrop-blur-sm"
@@ -721,6 +760,21 @@ export default function AppShell({ children }: { children: ReactNode }) {
                         </span>
                         <span className="text-xs text-white/80">{lightMode ? "AN" : "AUS"}</span>
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => void logout()}
+                        className={`mt-2 flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                          lightMode ? "bg-white text-zinc-900 ring-1 ring-zinc-200 hover:bg-zinc-100" : "bg-white/10 text-white ring-1 ring-white/10 hover:bg-white/15"
+                        }`}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <span className="text-[#FF007F]">
+                            <LogoutIcon className="h-5 w-5" />
+                          </span>
+                          Logout
+                        </span>
+                      </button>
                     </div>
                   ) : (
                     <div className="mt-4 grid gap-2">
@@ -737,6 +791,21 @@ export default function AppShell({ children }: { children: ReactNode }) {
                         <p className="text-sm font-semibold">{sessionUser?.displayName ?? "Benutzer"}</p>
                         <p className={`mt-1 text-xs ${lightMode ? "text-zinc-600" : "text-zinc-300"}`}>{userRoleLabel}</p>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => void logout()}
+                        className={`mt-2 flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                          lightMode ? "bg-white text-zinc-900 ring-1 ring-zinc-200 hover:bg-zinc-100" : "bg-white/10 text-white ring-1 ring-white/10 hover:bg-white/15"
+                        }`}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <span className="text-[#FF007F]">
+                            <LogoutIcon className="h-5 w-5" />
+                          </span>
+                          Logout
+                        </span>
+                      </button>
                     </div>
                   )}
                 </aside>
