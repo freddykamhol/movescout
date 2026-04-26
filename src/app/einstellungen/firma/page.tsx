@@ -6,14 +6,18 @@ import { getPrismaClient } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function FirmaSettingsPage() {
-  const prisma = getPrismaClient();
+  let initialOrganization = null;
 
-  if (!prisma) {
-    return <FirmaPageClient initialOrganization={null} />;
+  try {
+    const prisma = getPrismaClient();
+
+    if (prisma) {
+      const orgKey = await getCurrentOrgKey();
+      initialOrganization = await ensureOrganization(orgKey);
+    }
+  } catch {
+    // fallback
   }
 
-  const orgKey = await getCurrentOrgKey();
-  const organization = await ensureOrganization(orgKey);
-
-  return <FirmaPageClient initialOrganization={organization} />;
+  return <FirmaPageClient initialOrganization={initialOrganization} />;
 }

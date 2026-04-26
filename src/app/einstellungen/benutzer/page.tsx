@@ -6,18 +6,22 @@ import { getPrismaClient } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function BenutzerSettingsPage() {
-  const prisma = getPrismaClient();
+  let initialUsers = [];
 
-  if (!prisma) {
-    return <BenutzerPageClient initialUsers={[]} />;
+  try {
+    const prisma = getPrismaClient();
+
+    if (prisma) {
+      const orgKey = await getCurrentOrgKey();
+      await ensureOrganization(orgKey);
+      initialUsers = await prisma.user.findMany({
+        where: { orgKey },
+        orderBy: [{ role: "asc" }, { displayName: "asc" }],
+      });
+    }
+  } catch {
+    // fallback
   }
 
-  const orgKey = await getCurrentOrgKey();
-  await ensureOrganization(orgKey);
-  const users = await prisma.user.findMany({
-    where: { orgKey },
-    orderBy: [{ role: "asc" }, { displayName: "asc" }],
-  });
-
-  return <BenutzerPageClient initialUsers={users} />;
+  return <BenutzerPageClient initialUsers={initialUsers} />;
 }

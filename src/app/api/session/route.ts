@@ -109,48 +109,55 @@ function parseCookieHeader(cookieHeader: string | null) {
 }
 
 export async function GET(request: Request) {
-  const prisma = getPrismaClient();
+  try {
+    const prisma = getPrismaClient();
 
-  if (!prisma) {
-    return NextResponse.json({ message: "Datenbank ist nicht verfügbar." }, { status: 503 });
+    if (!prisma) {
+      return NextResponse.json({ message: "Datenbank ist nicht verfügbar." }, { status: 503 });
+    }
+
+    const orgKey = getOrgKeyFromRequest(request);
+    const organization = await ensureOrganization(orgKey);
+    await ensureDefaultAdmin(prisma, orgKey);
+
+    if (!organization) {
+      return NextResponse.json({ message: "Organisation konnte nicht initialisiert werden." }, { status: 500 });
+    }
+
+    const cookies = parseCookieHeader(request.headers.get("cookie"));
+    const preferredUserId = cookies.get(userCookieName)?.trim() || null;
+
+    if (!preferredUserId) {
+      return NextResponse.json({ message: "Nicht eingeloggt." }, { status: 401 });
+    }
+
+    const currentUser = await prisma.user.findFirst({
+      where: {
+        id: preferredUserId,
+        orgKey,
+      },
+    });
+
+    if (!currentUser) {
+      return NextResponse.json({ message: "Nicht eingeloggt." }, { status: 401 });
+    }
+
+    return NextResponse.json({
+      organization: {
+        orgKey: organization.orgKey,
+        name: organization.name,
+      },
+      user: {
+        id: currentUser.id,
+        displayName: currentUser.displayName,
+        email: currentUser.email,
+        role: currentUser.role,
+      },
+    });
+  } catch {
+    return NextResponse.json(
+      { message: "Session konnte nicht geladen werden. Bitte Datenbank/`DATABASE_URL` prüfen." },
+      { status: 503 },
+    );
   }
-
-  const orgKey = getOrgKeyFromRequest(request);
-  const organization = await ensureOrganization(orgKey);
-  await ensureDefaultAdmin(prisma, orgKey);
-
-  if (!organization) {
-    return NextResponse.json({ message: "Organisation konnte nicht initialisiert werden." }, { status: 500 });
-  }
-
-  const cookies = parseCookieHeader(request.headers.get("cookie"));
-  const preferredUserId = cookies.get(userCookieName)?.trim() || null;
-
-  if (!preferredUserId) {
-    return NextResponse.json({ message: "Nicht eingeloggt." }, { status: 401 });
-  }
-
-  const currentUser = await prisma.user.findFirst({
-    where: {
-      id: preferredUserId,
-      orgKey,
-    },
-  });
-
-  if (!currentUser) {
-    return NextResponse.json({ message: "Nicht eingeloggt." }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    organization: {
-      orgKey: organization.orgKey,
-      name: organization.name,
-    },
-    user: {
-      id: currentUser.id,
-      displayName: currentUser.displayName,
-      email: currentUser.email,
-      role: currentUser.role,
-    },
-  });
 }
