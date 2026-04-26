@@ -203,6 +203,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobilePanel, setMobilePanel] = useState<null | "settings" | "user">(null);
   const [lightMode, setLightMode] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sessionUser, setSessionUser] = useState<{ displayName: string; role: string } | null>(null);
@@ -267,6 +268,18 @@ export default function AppShell({ children }: { children: ReactNode }) {
     };
   }, [pathname, router]);
 
+  useEffect(() => {
+    if (!mobilePanel) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobilePanel]);
+
   const displayName = sessionUser?.displayName?.trim() ?? "";
   const userInitials = (() => {
     if (!displayName) {
@@ -308,13 +321,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </div>
         {showSidebar ? (
           <main
-            className={`min-h-screen w-full p-3 md:p-4 ${
+            className={`min-h-screen w-full p-3 pb-24 md:p-4 md:pb-28 lg:pb-4 ${
               lightMode ? "bg-zinc-100 text-zinc-900" : "bg-zinc-950 text-zinc-100"
             }`}
           >
             <div className="flex w-full flex-col gap-4 lg:flex-row">
               <aside
-                className={`relative flex w-full flex-col rounded-3xl transition-all duration-300 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:shrink-0 lg:self-start ${
+                className={`relative hidden w-full flex-col rounded-3xl transition-all duration-300 lg:flex lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:shrink-0 lg:self-start ${
                   sidebarCollapsed ? "p-3 lg:w-24" : "p-4 lg:w-72"
                 } ${
                   lightMode
@@ -434,7 +447,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 	                      />
 	                    </div>
 	                  ) : null}
-	                </nav>
+                </nav>
 
                 <div className="mt-4 pt-2">
                   <button
@@ -548,6 +561,187 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 {children}
               </section>
             </div>
+
+            <nav
+              className={`fixed bottom-3 left-3 right-3 z-50 grid grid-cols-6 gap-2 rounded-3xl p-2 shadow-xl lg:hidden ${
+                lightMode ? "bg-white/95 ring-1 ring-zinc-200" : "bg-zinc-950/90 ring-1 ring-white/10"
+              }`}
+              aria-label="Hauptmenü"
+            >
+              <Link
+                href="/dashboard"
+                onClick={() => setMobilePanel(null)}
+                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-xs font-medium transition ${
+                  activePage === "dashboard"
+                    ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/25"
+                    : lightMode
+                      ? "text-zinc-700 hover:bg-zinc-100"
+                      : "text-zinc-200 hover:bg-white/10"
+                }`}
+              >
+                <DashboardIcon className="h-5 w-5" />
+                <span className="leading-none">Dash</span>
+              </Link>
+              <Link
+                href="/kunden"
+                onClick={() => setMobilePanel(null)}
+                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-xs font-medium transition ${
+                  activePage === "customers"
+                    ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/25"
+                    : lightMode
+                      ? "text-zinc-700 hover:bg-zinc-100"
+                      : "text-zinc-200 hover:bg-white/10"
+                }`}
+              >
+                <CustomersIcon className="h-5 w-5" />
+                <span className="leading-none">Kunden</span>
+              </Link>
+              <Link
+                href="/umzuege"
+                onClick={() => setMobilePanel(null)}
+                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-xs font-medium transition ${
+                  activePage === "moves"
+                    ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/25"
+                    : lightMode
+                      ? "text-zinc-700 hover:bg-zinc-100"
+                      : "text-zinc-200 hover:bg-white/10"
+                }`}
+              >
+                <MovesIcon className="h-5 w-5" />
+                <span className="leading-none">Umzüge</span>
+              </Link>
+              <Link
+                href="/dokumente"
+                onClick={() => setMobilePanel(null)}
+                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-xs font-medium transition ${
+                  activePage === "documents"
+                    ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/25"
+                    : lightMode
+                      ? "text-zinc-700 hover:bg-zinc-100"
+                      : "text-zinc-200 hover:bg-white/10"
+                }`}
+              >
+                <DocumentsIcon className="h-5 w-5" />
+                <span className="leading-none">Docs</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setMobilePanel("settings")}
+                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-xs font-medium transition ${
+                  mobilePanel === "settings"
+                    ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/25"
+                    : lightMode
+                      ? "text-zinc-700 hover:bg-zinc-100"
+                      : "text-zinc-200 hover:bg-white/10"
+                }`}
+                aria-haspopup="dialog"
+                aria-expanded={mobilePanel === "settings"}
+              >
+                <SettingsIcon className="h-5 w-5" />
+                <span className="leading-none">Setup</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobilePanel("user")}
+                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-xs font-medium transition ${
+                  mobilePanel === "user"
+                    ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/25"
+                    : lightMode
+                      ? "text-zinc-700 hover:bg-zinc-100"
+                      : "text-zinc-200 hover:bg-white/10"
+                }`}
+                aria-haspopup="dialog"
+                aria-expanded={mobilePanel === "user"}
+              >
+                <UserIcon className="h-5 w-5" />
+                <span className="leading-none">User</span>
+              </button>
+            </nav>
+
+            {mobilePanel ? (
+              <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
+                <button
+                  type="button"
+                  className="absolute inset-0 bg-black/55 backdrop-blur-sm"
+                  onClick={() => setMobilePanel(null)}
+                  aria-label="Menü schließen"
+                />
+                <aside
+                  className={`absolute bottom-0 right-0 top-0 w-[min(22rem,92vw)] overflow-y-auto p-4 shadow-2xl ${
+                    lightMode ? "bg-white text-zinc-900" : "bg-zinc-950 text-zinc-100"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.22em] text-[#FF007F]">{mobilePanel === "settings" ? "Einstellungen" : "Benutzer"}</p>
+                      <p className={`mt-1 text-sm ${lightMode ? "text-zinc-600" : "text-zinc-300"}`}>
+                        {sessionOrg?.name ? sessionOrg.name : sessionOrg?.orgKey ? sessionOrg.orgKey : ""}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setMobilePanel(null)}
+                      className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl border transition ${
+                        lightMode ? "border-zinc-200 hover:bg-zinc-100" : "border-white/10 hover:bg-white/10"
+                      }`}
+                      aria-label="Schließen"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {mobilePanel === "settings" ? (
+                    <div className="mt-4 grid gap-2">
+                      <Link href="/einstellungen/preise" onClick={() => setMobilePanel(null)} className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                        lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                      }`}>Preise</Link>
+                      <Link href="/einstellungen/firma" onClick={() => setMobilePanel(null)} className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                        lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                      }`}>Firmendaten</Link>
+                      <Link href="/einstellungen/benutzer" onClick={() => setMobilePanel(null)} className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                        lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                      }`}>Benutzer</Link>
+                      <Link href="/einstellungen/organigramm" onClick={() => setMobilePanel(null)} className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                        lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                      }`}>Organigramm</Link>
+                      <Link href="/einstellungen/integrationen" onClick={() => setMobilePanel(null)} className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                        lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                      }`}>Integrationen</Link>
+
+                      <button
+                        type="button"
+                        onClick={() => setLightMode((previousValue) => !previousValue)}
+                        className={`mt-2 flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                          lightMode ? "bg-zinc-900 text-white hover:bg-zinc-800" : "bg-[#FF007F] text-white hover:bg-[#e30072]"
+                        }`}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          {lightMode ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />}
+                          {lightMode ? "Darkmode" : "Lightmode"}
+                        </span>
+                        <span className="text-xs text-white/80">{lightMode ? "AN" : "AUS"}</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-4 grid gap-2">
+                      <Link href="/einstellungen/profil" onClick={() => setMobilePanel(null)} className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                        lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                      }`}>Eigenen Benutzer bearbeiten</Link>
+                      <Link href="/einstellungen/benutzer" onClick={() => setMobilePanel(null)} className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                        lightMode ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200" : "bg-white/10 text-zinc-100 hover:bg-white/15"
+                      }`}>Benutzer verwalten</Link>
+                      <Link href="/einstellungen/firma" onClick={() => setMobilePanel(null)} className="rounded-2xl bg-[#FF007F]/90 px-4 py-3 text-sm font-medium text-white transition hover:bg-[#e30072]">
+                        Firmendaten
+                      </Link>
+                      <div className={`mt-3 rounded-2xl p-4 ${lightMode ? "bg-zinc-50 ring-1 ring-zinc-200" : "bg-white/5 ring-1 ring-white/10"}`}>
+                        <p className="text-sm font-semibold">{sessionUser?.displayName ?? "Benutzer"}</p>
+                        <p className={`mt-1 text-xs ${lightMode ? "text-zinc-600" : "text-zinc-300"}`}>{userRoleLabel}</p>
+                      </div>
+                    </div>
+                  )}
+                </aside>
+              </div>
+            ) : null}
           </main>
         ) : (
           children
