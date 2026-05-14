@@ -96,8 +96,18 @@ export async function POST(request: Request) {
       organization: { orgKey: organization.orgKey, name: organization.name },
       user: { id: user.id, displayName: user.displayName, email: user.email, role: user.role },
     });
-  } catch {
-    return NextResponse.json({ message: "Login nicht möglich. Bitte später erneut versuchen." }, { status: 500 });
+  } catch (error) {
+    const isProd = process.env.NODE_ENV === "production";
+    const extra =
+      !isProd && error && typeof error === "object" && "code" in error
+        ? ` (code: ${String((error as { code?: unknown }).code)})`
+        : "";
+
+    return NextResponse.json(
+      {
+        message: `Login nicht möglich. Bitte Datenbankzugang prüfen.${extra}`,
+      },
+      { status: 500 },
+    );
   }
 }
-

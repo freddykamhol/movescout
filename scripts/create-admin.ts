@@ -162,6 +162,13 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error);
+  const code = error && typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code) : "";
+  if (code === "P1010") {
+    console.error("Database access denied (P1010).");
+    console.error("Check that your DATABASE_URL user has privileges on the target database, then run `npm run db:push`.");
+    console.error("You can inspect your current env via `npm run db:debug`.");
+  } else {
+    console.error(error);
+  }
   process.exitCode = 1;
 });
