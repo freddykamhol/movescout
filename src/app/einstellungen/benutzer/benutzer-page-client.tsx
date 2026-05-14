@@ -193,40 +193,8 @@ export default function BenutzerPageClient({ initialUsers }: BenutzerPageClientP
     }
   }
 
-  async function sendInvite() {
-    if (!selectedUser) return;
-    setIsSaving(true);
-    setStatusMessage("Einladung wird versendet...");
-    try {
-      const response = await fetch(`/api/settings/users/${encodeURIComponent(selectedUser.id)}/invite`, { method: "POST" });
-      const payload = (await response.json()) as { message?: string };
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Einladung konnte nicht versendet werden.");
-      }
-      setStatusMessage(payload.message ?? "Einladung wurde versendet.");
-    } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "Einladung konnte nicht versendet werden.");
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  async function sendPasswordReset() {
-    if (!selectedUser) return;
-    setIsSaving(true);
-    setStatusMessage("Passwort-Reset wird versendet...");
-    try {
-      const response = await fetch(`/api/settings/users/${encodeURIComponent(selectedUser.id)}/password-reset`, { method: "POST" });
-      const payload = (await response.json()) as { message?: string };
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Passwort-Reset konnte nicht versendet werden.");
-      }
-      setStatusMessage(payload.message ?? "Passwort-Reset wurde versendet.");
-    } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "Passwort-Reset konnte nicht versendet werden.");
-    } finally {
-      setIsSaving(false);
-    }
+  function authDisabledNotice() {
+    setStatusMessage("Login/Einladungen/Passwort-Reset sind deaktiviert. Folgt!");
   }
 
   return (
@@ -236,7 +204,7 @@ export default function BenutzerPageClient({ initialUsers }: BenutzerPageClientP
         <div className="mt-3 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <h1 className={chrome.heroTitle}>Benutzer</h1>
-            <p className={chrome.heroText}>Verwalte alle Benutzer deiner Organisation. Login ist noch nicht erzwungen, die Struktur ist aber bereits vorbereitet.</p>
+            <p className={chrome.heroText}>Verwalte alle Benutzer deiner Organisation. Login ist deaktiviert.</p>
           </div>
           <div className={chrome.heroAccentCard}>
             <p className={chrome.heroAccentEyebrow}>Benutzer gesamt</p>
@@ -315,23 +283,8 @@ export default function BenutzerPageClient({ initialUsers }: BenutzerPageClientP
                 <p className={chrome.sectionText}>{selectedUser ? `ID: ${selectedUser.id}` : "Bitte links einen Benutzer auswählen."}</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => void sendInvite()}
-                  className={chrome.secondaryButton}
-                  disabled={!selectedUser || isSaving || !selectedUser.email}
-                  title={!selectedUser?.email ? "E-Mail fehlt." : undefined}
-                >
-                  Einladung senden
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void sendPasswordReset()}
-                  className={chrome.secondaryButton}
-                  disabled={!selectedUser || isSaving || !selectedUser.email}
-                  title={!selectedUser?.email ? "E-Mail fehlt." : undefined}
-                >
-                  Passwort-Reset
+                <button type="button" onClick={authDisabledNotice} className={chrome.secondaryButton} disabled={!selectedUser || isSaving}>
+                  Einladungen (Folgt)
                 </button>
                 <button type="button" onClick={() => void deleteSelectedUser()} className={chrome.secondaryButton} disabled={!selectedUser || isSaving}>
                   Löschen

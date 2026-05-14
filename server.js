@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 
-require("dotenv/config");
+require("./scripts/load-env.cjs");
 
 const http = require("http");
 const next = require("next");

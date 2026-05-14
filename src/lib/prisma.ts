@@ -1,7 +1,8 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import type { Pool } from "pg";
 import { PrismaClient } from "@/generated/prisma/client";
 import { resolvePrismaDatabaseUrls } from "@/lib/prisma-database-url";
+import { createPgPool } from "@/lib/pg-pool";
 
 const globalForPrisma = globalThis as typeof globalThis & {
   prismaConnectionString?: string;
@@ -36,9 +37,7 @@ export function getPrismaClient() {
   }
 
   if (!globalForPrisma.prismaPool) {
-    globalForPrisma.prismaPool = new Pool({
-      connectionString,
-    });
+    globalForPrisma.prismaPool = createPgPool(connectionString);
   }
 
   if (!globalForPrisma.prisma) {

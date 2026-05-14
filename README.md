@@ -7,6 +7,23 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - Node.js `20.20.1+` (see `.node-version` / `.nvmrc`)
 - npm `10.x`
 
+### Database (dev)
+
+- Set `DATABASE_URL` in `.env.local` (preferred for dev) or `.env`.
+- Template: `.env.local.example`
+- Quick check: `npm run env:check` and `npm run db:debug`
+- Apply schema (fast, no migrations): `npm run db:push`
+- Wartbarer Workflow (empfohlen): `npm run db:migrate` (erstellt Migrationen) und in Deployments `npm run db:deploy`
+
+#### Local Postgres via Docker
+
+```bash
+docker compose up -d
+cp .env.local.example .env.local
+# set DATABASE_URL=postgresql://movescout:movescout@localhost:5432/movescout_dev
+npm run db:push
+```
+
 First, run the development server:
 
 ```bash

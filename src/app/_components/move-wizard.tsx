@@ -296,6 +296,8 @@ const roomOptions = [
   { id: "garage", label: "Garage", icon: CarFront },
 ] as const satisfies readonly RoomOption[];
 
+type RoomLabel = (typeof roomOptions)[number]["label"];
+
 const MoveWizardContext = createContext<MoveWizardContextValue | null>(null);
 
 function createFurnitureOptionKey(catalogItemId: string, room: string) {
@@ -690,17 +692,19 @@ function CheckboxField({
   label,
   lightMode,
   onChange,
+  size = "normal",
 }: {
   checked: boolean;
   label: string;
   lightMode: boolean;
   onChange: (checked: boolean) => void;
+  size?: "compact" | "normal";
 }) {
   return (
     <label
-      className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm transition ${
-        lightMode ? "bg-zinc-100 text-zinc-900 ring-1 ring-zinc-200" : "bg-zinc-900 text-zinc-100 ring-1 ring-white/10"
-      }`}
+      className={`flex cursor-pointer items-center gap-3 transition ${
+        size === "compact" ? "w-full rounded-2xl px-2.5 py-2 text-[13px]" : "rounded-xl px-3 py-3 text-sm"
+      } ${lightMode ? "bg-zinc-100 text-zinc-900 ring-1 ring-zinc-200" : "bg-zinc-900 text-zinc-100 ring-1 ring-white/10"}`}
     >
       <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="h-4 w-4 accent-[#FF007F]" />
       <span>{label}</span>
@@ -798,7 +802,7 @@ function AddressSectionCard({
           lightMode ? "bg-[#FF007F]/6 ring-1 ring-[#FF007F]/10" : "bg-[#FF007F]/10 ring-1 ring-[#FF007F]/15"
         }`}
       >
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
           <div className="flex items-start gap-4">
             <div
               className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
@@ -817,9 +821,9 @@ function AddressSectionCard({
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 xl:items-end">
+          <div className="flex flex-col gap-2 2xl:items-end">
             {onApplyCustomerAddress ? (
-              <div className={`${chrome.compactSurfaceMuted} max-w-sm`}>
+              <div className={`${chrome.compactSurfaceMuted} w-full max-w-none 2xl:max-w-sm`}>
                 <p className="text-[11px] uppercase tracking-[0.18em] text-[#FF007F]">Kundenadresse</p>
                 <p className={`mt-1 text-sm ${lightMode ? "text-zinc-800" : "text-zinc-100"}`}>
                   {customerAddressAvailable ? customerAddressSummary : "Noch nicht in den Kundendaten erfasst"}
@@ -846,7 +850,7 @@ function AddressSectionCard({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+      <div className="mt-4 grid gap-4 2xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <section className={`${chrome.subtleInset} grid gap-4`}>
           <div className="flex items-start gap-3">
             <div className={sectionIconClass}>
@@ -912,7 +916,7 @@ function AddressSectionCard({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 2xl:grid-cols-3">
             <FieldLabel htmlFor={`${fieldPrefix}-volume`} gapClass="gap-1" label="Wohnfläche in m3" lightMode={lightMode}>
               <input
                 id={`${fieldPrefix}-volume`}
@@ -1021,77 +1025,106 @@ function FurnitureSelectionCard({
   onToggleBooleanField: (field: FurnitureBooleanField, value: boolean) => void;
   onUpdateDimensionField: (field: FurnitureDimensionField, value: string) => void;
 }) {
+  const dimensionInputs = (
+    <>
+      <label className="relative min-w-0">
+        <span className="sr-only">Länge</span>
+        <input
+          value={furniture.lengthCm}
+          onChange={(event) => onUpdateDimensionField("lengthCm", event.target.value)}
+          className={`${chrome.input} h-8 w-full min-w-0 px-2 py-1 pr-7 text-sm`}
+          inputMode="decimal"
+          aria-label="Länge in cm"
+        />
+        <span className={`pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-[0.18em] ${chrome.overline}`}>
+          L
+        </span>
+      </label>
+      <label className="relative min-w-0">
+        <span className="sr-only">Breite</span>
+        <input
+          value={furniture.widthCm}
+          onChange={(event) => onUpdateDimensionField("widthCm", event.target.value)}
+          className={`${chrome.input} h-8 w-full min-w-0 px-2 py-1 pr-7 text-sm`}
+          inputMode="decimal"
+          aria-label="Breite in cm"
+        />
+        <span className={`pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-[0.18em] ${chrome.overline}`}>
+          B
+        </span>
+      </label>
+      <label className="relative min-w-0">
+        <span className="sr-only">Höhe</span>
+        <input
+          value={furniture.heightCm}
+          onChange={(event) => onUpdateDimensionField("heightCm", event.target.value)}
+          className={`${chrome.input} h-8 w-full min-w-0 px-2 py-1 pr-7 text-sm`}
+          inputMode="decimal"
+          aria-label="Höhe in cm"
+        />
+        <span className={`pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-[0.18em] ${chrome.overline}`}>
+          H
+        </span>
+      </label>
+    </>
+  );
+
   return (
     <article className={chrome.subtlePanel}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={onRemove}
+          className={`absolute right-0 top-0 inline-flex h-9 w-9 items-center justify-center rounded-xl border text-sm transition ${
+            lightMode
+              ? "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+              : "border-white/10 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
+          }`}
+          aria-label="Möbel entfernen"
+          title="Entfernen"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+
+        <div className="pr-11">
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className={`text-base font-semibold ${lightMode ? "text-zinc-900" : "text-zinc-100"}`}>{furniture.furnitureName}</h4>
+            <h4 className={`text-sm font-semibold ${lightMode ? "text-zinc-900" : "text-zinc-100"}`}>{furniture.furnitureName}</h4>
             <span className={chrome.neutralChip}>{furniture.room}</span>
             <span className={chrome.chip}>{getFurnitureCategoryLabel(furniture.category)}</span>
+            <div className="hidden w-full min-w-0 flex-1 grid-cols-3 gap-2 md:grid md:portrait:hidden xl:hidden">
+              {dimensionInputs}
+            </div>
           </div>
-          <p className={`mt-1 text-sm ${chrome.mutedText}`}>Maße anpassen und Leistungen für dieses Möbelstück markieren.</p>
-        </div>
+          <p className={`mt-1 text-xs ${chrome.mutedText}`}>Leistungen markieren (Aufbau/Abbau/Entrümpeln).</p>
 
-        <button type="button" onClick={onRemove} className={`${chrome.secondaryButton} inline-flex items-center gap-2`}>
-          <Trash2 className="h-4 w-4" />
-          Entfernen
-        </button>
-      </div>
-
-      <div className="mt-4 rounded-2xl p-4 ring-1 ring-inset ring-[#FF007F]/10">
-        <p className="text-xs uppercase tracking-[0.18em] text-[#FF007F]">Maße in cm</p>
-        <div className="mt-3 grid gap-3 md:grid-cols-3">
-          <FieldLabel label="Länge" lightMode={lightMode}>
-            <input
-              value={furniture.lengthCm}
-              onChange={(event) => onUpdateDimensionField("lengthCm", event.target.value)}
-              className={chrome.input}
-              inputMode="decimal"
-              placeholder="Länge"
-            />
-          </FieldLabel>
-          <FieldLabel label="Breite" lightMode={lightMode}>
-            <input
-              value={furniture.widthCm}
-              onChange={(event) => onUpdateDimensionField("widthCm", event.target.value)}
-              className={chrome.input}
-              inputMode="decimal"
-              placeholder="Breite"
-            />
-          </FieldLabel>
-          <FieldLabel label="Höhe" lightMode={lightMode}>
-            <input
-              value={furniture.heightCm}
-              onChange={(event) => onUpdateDimensionField("heightCm", event.target.value)}
-              className={chrome.input}
-              inputMode="decimal"
-              placeholder="Höhe"
-            />
-          </FieldLabel>
+          <div className="mt-2 grid w-full grid-cols-3 gap-2 md:hidden md:portrait:grid xl:grid">
+            {dimensionInputs}
+          </div>
         </div>
       </div>
 
-      <div className="mt-4">
-        <p className="text-xs uppercase tracking-[0.18em] text-[#FF007F]">Leistungen</p>
-        <div className="mt-3 grid gap-3 md:grid-cols-3">
+      <div className="mt-3">
+        <div className="grid w-full grid-cols-3 gap-2">
           <CheckboxField
             checked={furniture.isDisposal}
             label="Entrümpeln"
             lightMode={lightMode}
             onChange={(checked) => onToggleBooleanField("isDisposal", checked)}
+            size="compact"
           />
           <CheckboxField
             checked={furniture.isAssembly}
             label="Aufbau"
             lightMode={lightMode}
             onChange={(checked) => onToggleBooleanField("isAssembly", checked)}
+            size="compact"
           />
           <CheckboxField
             checked={furniture.isDisassembly}
             label="Abbau"
             lightMode={lightMode}
             onChange={(checked) => onToggleBooleanField("isDisassembly", checked)}
+            size="compact"
           />
         </div>
       </div>
@@ -1177,10 +1210,8 @@ function MoveWizardModal({
     moveNumber: string;
   } | null>(null);
   const [isLoadingEditMove, setIsLoadingEditMove] = useState(false);
-  const [furniturePickerOpen, setFurniturePickerOpen] = useState(false);
-  const [furnitureSearch, setFurnitureSearch] = useState("");
-  const [selectedFurnitureCategory, setSelectedFurnitureCategory] = useState<"all" | FurnitureCategoryId>("all");
-  const [selectedFurnitureOptionKey, setSelectedFurnitureOptionKey] = useState<string | null>(null);
+  const [activeFurnitureRoomLabel, setActiveFurnitureRoomLabel] = useState<RoomLabel | null>(null);
+  const [selectedFurnitureCatalogItemId, setSelectedFurnitureCatalogItemId] = useState<string>("");
   const [pricingConfig, setPricingConfig] = useState<MovePricingConfig>(defaultMovePricingConfig);
   const [isSavingMove, setIsSavingMove] = useState(false);
   const [isGeneratingDocuments, setIsGeneratingDocuments] = useState(false);
@@ -1322,35 +1353,6 @@ function MoveWizardModal({
     0,
   );
   const totalWalkingDistanceLabel = totalWalkingDistance > 0 ? formatDistanceLabel(totalWalkingDistance) : "Noch offen";
-  const normalizedFurnitureSearch = furnitureSearch.trim().toLowerCase();
-  const availableFurnitureOptions = selectedRoomLabels.flatMap((roomLabel) =>
-    furnitureCatalog
-      .filter((catalogItem) => catalogItem.rooms.includes(roomLabel))
-      .map((catalogItem) => ({
-        key: createFurnitureOptionKey(catalogItem.id, roomLabel),
-        catalogItem,
-        roomLabel,
-      })),
-  );
-  const filteredFurnitureGroups = selectedRoomLabels.map((roomLabel) => ({
-    roomLabel,
-    options: furnitureCatalog
-      .filter(
-        (catalogItem) =>
-          catalogItem.rooms.includes(roomLabel) &&
-          (selectedFurnitureCategory === "all" || catalogItem.category === selectedFurnitureCategory) &&
-          (normalizedFurnitureSearch.length === 0 ||
-            [catalogItem.furnitureName, getFurnitureCategoryLabel(catalogItem.category)]
-              .join(" ")
-              .toLowerCase()
-              .includes(normalizedFurnitureSearch)),
-      )
-      .sort((left, right) => left.furnitureName.localeCompare(right.furnitureName, "de")),
-  }));
-  const selectedFurnitureOption =
-    selectedFurnitureOptionKey
-      ? availableFurnitureOptions.find((option) => option.key === selectedFurnitureOptionKey) ?? null
-      : null;
   const existingFurnitureComboKeys = new Set(
     wizardData.furnitureSelections.map((furniture) => createFurnitureOptionKey(furniture.catalogItemId, furniture.room)),
   );
@@ -1370,6 +1372,48 @@ function MoveWizardModal({
       items: wizardData.furnitureSelections.filter((furniture) => furniture.room === roomLabel),
     }))
     .filter((group) => group.items.length > 0);
+  const resolvedActiveFurnitureRoomLabel = useMemo<RoomLabel | null>(() => {
+    if (activeFurnitureRoomLabel && selectedRoomLabels.includes(activeFurnitureRoomLabel)) {
+      return activeFurnitureRoomLabel;
+    }
+
+    return selectedRoomLabels[0] ?? null;
+  }, [activeFurnitureRoomLabel, selectedRoomLabels]);
+  const manualFurnitureOptionsForActiveRoom = useMemo(() => {
+    if (!resolvedActiveFurnitureRoomLabel) return [];
+
+    return furnitureCatalog
+      .filter((catalogItem) => catalogItem.rooms.includes(resolvedActiveFurnitureRoomLabel))
+      .sort((left, right) => left.furnitureName.localeCompare(right.furnitureName, "de"));
+  }, [resolvedActiveFurnitureRoomLabel]);
+  const missingStandardFurnitureForActiveRoom = useMemo(
+    () => missingStandardFurnitureOptions.filter((option) => option.roomLabel === resolvedActiveFurnitureRoomLabel),
+    [missingStandardFurnitureOptions, resolvedActiveFurnitureRoomLabel],
+  );
+  const selectedManualFurnitureCatalogItem = useMemo(() => {
+    if (!selectedFurnitureCatalogItemId || !resolvedActiveFurnitureRoomLabel) return null;
+    return (
+      manualFurnitureOptionsForActiveRoom.find((catalogItem) => catalogItem.id === selectedFurnitureCatalogItemId) ?? null
+    );
+  }, [manualFurnitureOptionsForActiveRoom, resolvedActiveFurnitureRoomLabel, selectedFurnitureCatalogItemId]);
+
+  useEffect(() => {
+    if (!resolvedActiveFurnitureRoomLabel) {
+      setActiveFurnitureRoomLabel(null);
+      setSelectedFurnitureCatalogItemId("");
+      return;
+    }
+
+    setActiveFurnitureRoomLabel((current) => {
+      if (current && selectedRoomLabels.includes(current)) return current;
+      return resolvedActiveFurnitureRoomLabel;
+    });
+    setSelectedFurnitureCatalogItemId((current) => {
+      if (!current) return current;
+      const stillValid = manualFurnitureOptionsForActiveRoom.some((catalogItem) => catalogItem.id === current);
+      return stillValid ? current : "";
+    });
+  }, [manualFurnitureOptionsForActiveRoom, resolvedActiveFurnitureRoomLabel, selectedRoomLabels]);
   const sourceLabel = options?.sourceLabel ?? "Allgemein";
   const customerNumber = editingMoveMeta?.customerNumber ?? options?.customerPrefill?.customerNumber;
   const stepProgressPercent =
@@ -1850,15 +1894,13 @@ function MoveWizardModal({
     }));
   }
 
-  function addSelectedFurnitureOption() {
-    if (!selectedFurnitureOption) {
+  function addSelectedManualFurniture() {
+    if (!selectedManualFurnitureCatalogItem || !resolvedActiveFurnitureRoomLabel) {
       return;
     }
 
-    addFurnitureSelection(selectedFurnitureOption);
-    setFurniturePickerOpen(false);
-    setFurnitureSearch("");
-    setSelectedFurnitureOptionKey(null);
+    addFurnitureSelection({ catalogItem: selectedManualFurnitureCatalogItem, roomLabel: resolvedActiveFurnitureRoomLabel });
+    setSelectedFurnitureCatalogItemId("");
   }
 
   function addMissingStandardFurniture() {
@@ -1890,10 +1932,6 @@ function MoveWizardModal({
         ],
       };
     });
-
-    setFurniturePickerOpen(false);
-    setFurnitureSearch("");
-    setSelectedFurnitureOptionKey(null);
   }
 
   function updateFurnitureDimensionField(furnitureId: string, field: FurnitureDimensionField, value: string) {
@@ -2738,7 +2776,7 @@ function MoveWizardModal({
 	    if (currentStep.id === "customer") {
 	      return (
 	        <section className={chrome.panel}>
-	          <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 1: Kundendaten</h3>
+	          <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Kundendaten</h3>
 	          <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
 	            Firma, Anrede, Kontaktname und Anschrift des Kunden.
 	          </p>
@@ -2857,7 +2895,7 @@ function MoveWizardModal({
 	          <section className={chrome.panel}>
 	            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
 	              <div>
-	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 2: Adressen</h3>
+	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Adressen</h3>
 	                <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
 	                  Auszug, optionale Zwischenstopps und Einzug mit denselben Detailfeldern.
 	                </p>
@@ -2945,18 +2983,33 @@ function MoveWizardModal({
             </div>
           </section>
 
-          <AddressSectionCard
-            address={wizardData.moveOutAddress}
-            chrome={chrome}
-            customerAddressButtonLabel="Kundenadresse als Auszug"
-            customerAddressSummary={customerAddressSummary}
-            kind="move-out"
-            lightMode={lightMode}
-            onApplyCustomerAddress={() => applyCustomerAddressToRootAddress("moveOutAddress")}
-            onToggleBooleanField={(field, value) => toggleRootAddressBooleanField("moveOutAddress", field, value)}
-            onUpdateField={(field, value) => updateRootAddressField("moveOutAddress", field, value)}
-            title="Auszug"
-          />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <AddressSectionCard
+              address={wizardData.moveOutAddress}
+              chrome={chrome}
+              customerAddressButtonLabel="Kundenadresse als Auszug"
+              customerAddressSummary={customerAddressSummary}
+              kind="move-out"
+              lightMode={lightMode}
+              onApplyCustomerAddress={() => applyCustomerAddressToRootAddress("moveOutAddress")}
+              onToggleBooleanField={(field, value) => toggleRootAddressBooleanField("moveOutAddress", field, value)}
+              onUpdateField={(field, value) => updateRootAddressField("moveOutAddress", field, value)}
+              title="Auszug"
+            />
+
+            <AddressSectionCard
+              address={wizardData.moveInAddress}
+              chrome={chrome}
+              customerAddressButtonLabel="Kundenadresse als Einzug"
+              customerAddressSummary={customerAddressSummary}
+              kind="move-in"
+              lightMode={lightMode}
+              onApplyCustomerAddress={() => applyCustomerAddressToRootAddress("moveInAddress")}
+              onToggleBooleanField={(field, value) => toggleRootAddressBooleanField("moveInAddress", field, value)}
+              onUpdateField={(field, value) => updateRootAddressField("moveInAddress", field, value)}
+              title="Einzugsadresse"
+            />
+          </div>
 
           {wizardData.stopAddresses.map((stopAddress, index) => (
             <AddressSectionCard
@@ -2972,19 +3025,6 @@ function MoveWizardModal({
               title={`Zwischenstopp ${index + 1}`}
             />
           ))}
-
-          <AddressSectionCard
-            address={wizardData.moveInAddress}
-            chrome={chrome}
-            customerAddressButtonLabel="Kundenadresse als Einzug"
-            customerAddressSummary={customerAddressSummary}
-            kind="move-in"
-            lightMode={lightMode}
-            onApplyCustomerAddress={() => applyCustomerAddressToRootAddress("moveInAddress")}
-            onToggleBooleanField={(field, value) => toggleRootAddressBooleanField("moveInAddress", field, value)}
-            onUpdateField={(field, value) => updateRootAddressField("moveInAddress", field, value)}
-            title="Einzugsadresse"
-          />
 
           <section className={chrome.panel}>
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
@@ -3147,7 +3187,7 @@ function MoveWizardModal({
 	        <section className={chrome.panel}>
 	          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
 	            <div>
-	              <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 3: Raumauswahl</h3>
+	              <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Raumauswahl</h3>
 	              <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
 	                Mehrfachauswahl ist erlaubt. Jede Karte funktioniert wie eine Checkbox.
 	              </p>
@@ -3179,7 +3219,7 @@ function MoveWizardModal({
 	          <section className={chrome.panel}>
 	            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
 	              <div>
-	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 4: Möbelauswahl</h3>
+	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Möbelauswahl</h3>
 	                <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
 	                  Die Möbelauswahl richtet sich nach den zuvor markierten Räumen.
 	                </p>
@@ -3200,7 +3240,7 @@ function MoveWizardModal({
 	          <section className={chrome.panel}>
 	            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
 	              <div>
-	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 4: Möbelauswahl</h3>
+	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Möbelauswahl</h3>
 	                <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
 	                  Möbel nach gewählten Räumen hinzufügen, Standardmöbel übernehmen und Zusatzleistungen direkt markieren.
 	                </p>
@@ -3257,162 +3297,115 @@ function MoveWizardModal({
               </div>
             </div>
 
-            <div className={`mt-4 ${chrome.subtleInset}`}>
-              <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto_auto]">
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setFurniturePickerOpen((currentValue) => !currentValue)}
-                    className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
-                      lightMode
-                        ? "border-zinc-300 bg-white text-zinc-900 hover:border-[#FF007F]/40"
-                        : "border-white/10 bg-zinc-950 text-zinc-100 hover:border-[#FF007F]/30"
-                    }`}
-                  >
-                    <span className="min-w-0">
-                      <span className="text-xs uppercase tracking-[0.18em] text-[#FF007F]">Manuelle Auswahl</span>
-                      <span className="mt-1 block truncate text-sm font-medium">
-                        {selectedFurnitureOption
-                          ? `${selectedFurnitureOption.catalogItem.furnitureName} | ${selectedFurnitureOption.roomLabel} | ${getFurnitureCategoryLabel(selectedFurnitureOption.catalogItem.category)}`
-                          : "Möbelstück aus ausgewählten Räumen wählen"}
-                      </span>
-                    </span>
-                    <ChevronDown className={`h-4 w-4 shrink-0 transition ${furniturePickerOpen ? "rotate-180" : "rotate-0"}`} />
-                  </button>
+	            <div className={`mt-4 ${chrome.subtleInset}`}>
+	              <div className="grid gap-4">
+	                <div className="flex flex-wrap gap-2">
+	                  {selectedRoomLabels.map((roomLabel) => {
+	                    const isActive = roomLabel === resolvedActiveFurnitureRoomLabel;
 
-                  {furniturePickerOpen ? (
-                    <div
-                      className={`absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-2xl border ${
-                        lightMode ? "border-zinc-200 bg-white shadow-2xl shadow-zinc-300/30" : "border-white/10 bg-zinc-950 shadow-2xl shadow-black/30"
-                      }`}
-                    >
-                      <div className="border-b p-3">
-                        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
-                          <div className="relative">
-                            <Search className={`pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${chrome.mutedText}`} />
-                            <input
-                              value={furnitureSearch}
-                              onChange={(event) => setFurnitureSearch(event.target.value)}
-                              className={`${chrome.input} pl-9`}
-                              placeholder="Nach Möbelstück oder Kategorie suchen"
-                            />
-                          </div>
+	                    return (
+	                      <button
+	                        key={roomLabel}
+	                        type="button"
+	                        onClick={() => {
+	                          setActiveFurnitureRoomLabel(roomLabel);
+	                          setSelectedFurnitureCatalogItemId("");
+	                        }}
+	                        className={`rounded-2xl px-3 py-2 text-center text-sm font-medium transition ${
+	                          isActive
+	                            ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/20"
+	                            : lightMode
+	                              ? "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
+	                              : "bg-zinc-900 text-zinc-200 ring-1 ring-white/10 hover:bg-zinc-800"
+	                        }`}
+	                      >
+	                        {roomLabel}
+	                      </button>
+	                    );
+	                  })}
+	                </div>
 
-                          <select
-                            value={selectedFurnitureCategory}
-                            onChange={(event) => {
-                              const nextCategory = event.target.value as "all" | FurnitureCategoryId;
+	                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+	                  <div className="grid gap-1.5">
+	                    <p className={`text-xs uppercase tracking-[0.18em] ${chrome.overline}`}>
+	                      Möbelauswahl: {resolvedActiveFurnitureRoomLabel}
+	                    </p>
+	                    <select
+	                      value={selectedFurnitureCatalogItemId}
+	                      onChange={(event) => setSelectedFurnitureCatalogItemId(event.target.value)}
+	                      className={chrome.input}
+	                    >
+	                      <option value="">Möbel auswählen…</option>
+	                      {manualFurnitureOptionsForActiveRoom.map((catalogItem) => (
+	                        <option key={catalogItem.id} value={catalogItem.id}>
+	                          {catalogItem.furnitureName} · {getFurnitureCategoryLabel(catalogItem.category)}
+	                        </option>
+	                      ))}
+	                    </select>
+	                  </div>
 
-                              setSelectedFurnitureCategory(nextCategory);
-                              setSelectedFurnitureOptionKey(null);
-                            }}
-                            className={chrome.input}
-                          >
-                            <option value="all">Alle Kategorien</option>
-                            {furnitureCategories.map((category) => (
-                              <option key={category.id} value={category.id}>
-                                {category.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
+	                  <button
+	                    type="button"
+	                    onClick={addSelectedManualFurniture}
+	                    disabled={!selectedManualFurnitureCatalogItem}
+	                    className={`${chrome.actionButton} inline-flex items-center justify-center gap-2`}
+	                  >
+	                    <Plus className="h-4 w-4" />
+	                    Hinzufügen
+	                  </button>
+	                </div>
 
-                      <div className="max-h-80 overflow-y-auto p-3">
-                        <div className="grid gap-3">
-                          {filteredFurnitureGroups.some((group) => group.options.length > 0) ? (
-                            filteredFurnitureGroups.map((group) =>
-                              group.options.length > 0 ? (
-                                <section key={group.roomLabel} className="grid gap-2">
-                                  <div className="flex items-center justify-between">
-                                    <h4 className={`text-sm font-semibold ${lightMode ? "text-zinc-900" : "text-zinc-100"}`}>{group.roomLabel}</h4>
-                                    <span className={chrome.neutralChip}>{group.options.length}</span>
-                                  </div>
-                                  <div className="grid gap-2">
-                                    {group.options.map((catalogItem) => {
-                                      const optionKey = createFurnitureOptionKey(catalogItem.id, group.roomLabel);
-                                      const isSelected = selectedFurnitureOptionKey === optionKey;
+	                <div className="grid gap-2">
+	                  <div className="flex items-center justify-between gap-3">
+	                    <div>
+	                      <p className="text-sm font-semibold">Schnellhinzufügen</p>
+	                      <p className={`mt-1 text-sm ${chrome.mutedText}`}>Standardmöbel für {resolvedActiveFurnitureRoomLabel}.</p>
+	                    </div>
+	                    <span className={chrome.neutralChip}>{missingStandardFurnitureForActiveRoom.length}</span>
+	                  </div>
 
-                                      return (
-                                        <button
-                                          key={optionKey}
-                                          type="button"
-                                          onClick={() => setSelectedFurnitureOptionKey(optionKey)}
-                                          className={`rounded-xl border px-3 py-3 text-left transition ${
-                                            isSelected
-                                              ? lightMode
-                                                ? "border-[#FF007F] bg-[#FF007F]/8 text-zinc-900"
-                                                : "border-[#FF007F] bg-[#FF007F]/12 text-zinc-100"
-                                              : lightMode
-                                                ? "border-zinc-200 bg-zinc-50 text-zinc-900 hover:border-[#FF007F]/30"
-                                                : "border-white/10 bg-zinc-900 text-zinc-100 hover:border-[#FF007F]/25"
-                                          }`}
-                                        >
-                                          <div className="flex flex-wrap items-start justify-between gap-2">
-                                            <div>
-                                              <p className="font-medium">{catalogItem.furnitureName}</p>
-                                              <p className={`mt-1 text-xs ${chrome.mutedText}`}>
-                                                {catalogItem.lengthCm} x {catalogItem.widthCm} x {catalogItem.heightCm} cm
-                                              </p>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                              <span className={chrome.neutralChip}>{getFurnitureCategoryLabel(catalogItem.category)}</span>
-                                              {catalogItem.standardRooms.includes(group.roomLabel) ? (
-                                                <span className={chrome.chip}>Standard</span>
-                                              ) : null}
-                                            </div>
-                                          </div>
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </section>
-                              ) : null,
-                            )
-                          ) : (
-                            <div className={`${chrome.emptyState} px-4 py-6`}>
-                              Keine Möbel für die aktuelle Suche gefunden.
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
+	                  {missingStandardFurnitureForActiveRoom.length === 0 ? (
+	                    <div className={`${chrome.emptyState} px-4 py-4`}>Alle Standardmöbel für diesen Raum sind bereits angelegt.</div>
+	                  ) : (
+	                    <div className="flex flex-wrap gap-2">
+	                      {missingStandardFurnitureForActiveRoom.map((option) => (
+	                        <button
+	                          key={option.key}
+	                          type="button"
+	                          onClick={() => addFurnitureSelection(option)}
+	                          className={`rounded-2xl px-3 py-2 text-center text-[13px] font-medium transition ${
+	                            lightMode
+	                              ? "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
+	                              : "bg-zinc-900 text-zinc-200 ring-1 ring-white/10 hover:bg-zinc-800"
+	                          }`}
+	                        >
+	                          {option.catalogItem.furnitureName}
+	                        </button>
+	                      ))}
+	                    </div>
+	                  )}
+	                </div>
 
-                <button
-                  type="button"
-                  onClick={addSelectedFurnitureOption}
-                  disabled={!selectedFurnitureOption}
-                  className={`${chrome.actionButton} inline-flex items-center justify-center gap-2`}
-                >
-                  <Plus className="h-4 w-4" />
-                  Hinzufügen
-                </button>
+	                <div className="flex flex-wrap gap-3 text-sm">
+	                  <div className={chrome.compactSurfaceMuted}>
+	                    {manualFurnitureOptionsForActiveRoom.length} Möbeloptionen in {resolvedActiveFurnitureRoomLabel}
+	                  </div>
+	                  <div className={chrome.compactSurfaceMuted}>
+	                    {missingStandardFurnitureOptions.length} Standardmöbel aktuell noch nicht übernommen
+	                  </div>
+	                </div>
 
-                <button
-                  type="button"
-                  onClick={addMissingStandardFurniture}
-                  disabled={missingStandardFurnitureOptions.length === 0}
-                  className={`${chrome.secondaryButton} inline-flex items-center justify-center gap-2`}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  Alle Standardmöbel hinzufügen
-                </button>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-3 text-sm">
-                <div className={chrome.compactSurfaceMuted}>
-                  {availableFurnitureOptions.length} Möbeloptionen in {selectedRoomLabels.length} ausgewählten Räumen
-                </div>
-                <div className={chrome.compactSurfaceMuted}>
-                  Filter: {selectedFurnitureCategory === "all" ? "Alle Kategorien" : getFurnitureCategoryLabel(selectedFurnitureCategory)}
-                </div>
-                <div className={chrome.compactSurfaceMuted}>
-                  {missingStandardFurnitureOptions.length} Standardmöbel aktuell noch nicht übernommen
-                </div>
-              </div>
-            </div>
+	                <button
+	                  type="button"
+	                  onClick={addMissingStandardFurniture}
+	                  disabled={missingStandardFurnitureOptions.length === 0}
+	                  className={`${chrome.secondaryButton} inline-flex items-center justify-center gap-2`}
+	                >
+	                  <Sparkles className="h-4 w-4" />
+	                  Alle Standardmöbel hinzufügen
+	                </button>
+	              </div>
+	            </div>
           </section>
 
           {wizardData.furnitureSelections.length === 0 ? (
@@ -3463,7 +3456,7 @@ function MoveWizardModal({
 	          <section className={chrome.panel}>
 	            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
 	              <div>
-	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 5: Zusatzleistungen Allgemein</h3>
+	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Zusatzleistungen Allgemein</h3>
 	                <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
 	                  Handwerk, Bohren und Verpackungsmaterial inkl. Ein- und Auspackservice.
 	                </p>
@@ -3610,7 +3603,7 @@ function MoveWizardModal({
 	        <section className={chrome.panel}>
 	          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
 	            <div>
-	              <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 6: Küchenleistungen</h3>
+	              <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Küchenleistungen</h3>
 	              <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
 	                Laufmeter Küche, Arbeitsplatten, E-Geräte und passende Optionen.
 	              </p>
@@ -3758,30 +3751,15 @@ function MoveWizardModal({
 	          <section className={chrome.panel}>
 	            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
 	              <div>
-	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Seite 7: Zusammenfassung</h3>
+	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Zusammenfassung</h3>
 	                <p className={`${chrome.sectionText} [@media(max-height:640px)]:hidden`}>
 	                  Alle Posten aus Route, Möbeln, Zusatzleistungen und Küche.
 	                </p>
 	              </div>
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <div className={`${chrome.compactSurfaceMuted} text-sm`}>
-                  Gesamt: {routeCalculationData ? priceFormatter.format(grandTotalPrice) : "Route fehlt (nur Zusatzleistungen sichtbar)"}
-                </div>
-	                <button
-	                  type="button"
-	                  onClick={() => void createMoveAndGenerateDocuments()}
-	                  disabled={!routeCalculationData || isSavingMove || isGeneratingDocuments || isLoadingEditMove}
-	                  className={chrome.actionButton}
-	                  title={!routeCalculationData ? "Bitte zuerst Route berechnen (Auszug + Einzug vollständig)." : undefined}
-	                >
-	                  {isSavingMove || isGeneratingDocuments
-	                    ? "Erstelle..."
-	                    : editingMoveMeta
-	                      ? "Änderungen speichern"
-	                      : "Umzug anlegen"}
-	                </button>
-	              </div>
-	            </div>
+              <div className={`${chrome.compactSurfaceMuted} text-sm`}>
+                {routeCalculationData ? "Route berechnet" : "Route fehlt (nur Zusatzleistungen sichtbar)"}
+              </div>
+            </div>
 
             {routeCalculationData ? null : (
               <div className={`mt-4 ${chrome.subtleInset} text-sm`}>
@@ -3810,11 +3788,23 @@ function MoveWizardModal({
                 </FieldLabel>
               </div>
 
-              <div className={`${chrome.subtleInset} grid gap-2 text-sm`}>
-                <p className={chrome.statLabel}>Hinweis</p>
-                <p className={chrome.mutedText}>
-                  Angebot/Rechnung werden mit den aktuellen Firmendaten aus <span className="font-medium">Einstellungen → Firma</span> erstellt.
-                  Bitte prüfe Umsatzsteuer-Status (Kleinunternehmer vs. MwSt.) und Zahlungsbedingungen, bevor du PDFs an Kunden versendest.
+              <div
+                className={`rounded-2xl p-4 ${
+                  lightMode ? "bg-[#FF007F]/10 ring-1 ring-[#FF007F]/25" : "bg-[#FF007F]/15 ring-1 ring-[#FF007F]/35"
+                }`}
+              >
+                <p className="text-xs uppercase tracking-[0.2em] text-[#FF007F]">Gesamtsumme</p>
+                <p className={`mt-2 text-3xl font-semibold ${lightMode ? "text-zinc-900" : "text-zinc-100"}`}>
+                  {routeCalculationData ? priceFormatter.format(grandTotalPrice) : priceFormatter.format(manualServicesTotalPrice)}
+                </p>
+                <p className={`mt-1 text-sm ${chrome.mutedText}`}>
+                  {routeCalculationData
+                    ? wizardData.roomSelections.includes("kitchen")
+                      ? "Route + Möbel + Zusatzleistungen + Küche"
+                      : "Route + Möbel + Zusatzleistungen"
+                    : wizardData.roomSelections.includes("kitchen")
+                      ? "Zusatzleistungen + Küche (Route fehlt noch)"
+                      : "Zusatzleistungen (Route fehlt noch)"}
                 </p>
               </div>
             </div>
@@ -3923,23 +3913,7 @@ function MoveWizardModal({
               ) : null}
             </div>
 
-            <div className="mt-5">
-              <div className={`rounded-2xl p-4 ${lightMode ? "bg-[#FF007F]/10 ring-1 ring-[#FF007F]/25" : "bg-[#FF007F]/15 ring-1 ring-[#FF007F]/35"}`}>
-                <p className="text-xs uppercase tracking-[0.2em] text-[#FF007F]">Gesamtsumme</p>
-                <p className={`mt-2 text-3xl font-semibold ${lightMode ? "text-zinc-900" : "text-zinc-100"}`}>
-                  {routeCalculationData ? priceFormatter.format(grandTotalPrice) : priceFormatter.format(manualServicesTotalPrice)}
-                </p>
-                <p className={`mt-1 text-sm ${chrome.mutedText}`}>
-                  {routeCalculationData
-                    ? wizardData.roomSelections.includes("kitchen")
-                      ? "Route + Möbel + Zusatzleistungen + Küche"
-                      : "Route + Möbel + Zusatzleistungen"
-                    : wizardData.roomSelections.includes("kitchen")
-                      ? "Zusatzleistungen + Küche (Route fehlt noch)"
-                      : "Zusatzleistungen (Route fehlt noch)"}
-                </p>
-              </div>
-            </div>
+            <div className="mt-5" />
           </section>
         </div>
       );
@@ -3990,7 +3964,7 @@ function MoveWizardModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-stretch justify-center p-0 sm:items-center sm:p-3 md:p-6 [@media(max-height:640px)]:items-stretch [@media(max-height:640px)]:p-0">
+    <div className="fixed inset-0 z-50 flex items-stretch justify-center p-0 sm:items-start sm:pt-3 sm:pb-3 sm:px-3 md:pt-5 md:pb-6 md:px-6 [@media(max-height:640px)]:items-stretch [@media(max-height:640px)]:p-0">
       <button
         type="button"
         aria-label="Modal schließen"
@@ -4031,19 +4005,19 @@ function MoveWizardModal({
 		            </div>
 		          </div>
 
-		          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between [@media(max-height:640px)]:hidden">
+		          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6 xl:gap-8 [@media(max-height:640px)]:hidden">
 		            <div>
 		              <p className="text-xs uppercase tracking-[0.2em] text-[#FF007F]">{editingMoveMeta ? "Umzug bearbeiten" : "Umzug anlegen"}</p>
 		              <h2 className="mt-2 text-2xl font-semibold [@media(max-height:640px)]:mt-1 [@media(max-height:640px)]:text-xl">
 		                {editingMoveMeta ? editingMoveMeta.moveNumber : "Neuer Umzug"}
 		              </h2>
-		              <p className={`mt-1 max-w-3xl text-sm [@media(max-height:640px)]:hidden ${chrome.mutedText}`}>
+		              <p className={`mt-3 max-w-3xl text-sm [@media(max-height:640px)]:hidden ${chrome.mutedText}`}>
 		                {currentStep.title} | Aufruf aus {sourceLabel}
 		                {customerNumber ? ` | Kunde ${customerNumber}` : ""}
 		              </p>
 		            </div>
 
-	            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-3">
+	            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-5 md:justify-end">
 	              <div className={`${chrome.heroAccentCard} [@media(max-height:640px)]:hidden`}>
 	                <p className={`${chrome.heroAccentEyebrow} [@media(max-height:640px)]:text-[11px]`}>Live-Preisanzeige</p>
 	                <p className={`text-[#FF007F] [@media(max-height:640px)]:mt-1 [@media(max-height:640px)]:text-base md:text-lg font-semibold`}>
@@ -4060,7 +4034,7 @@ function MoveWizardModal({
 	            </div>
 	          </div>
 
-	          <div className="mt-4 grid gap-2 [@media(max-height:640px)]:mt-3 xl:hidden">
+	          <div className="mt-5 grid gap-2 [@media(max-height:640px)]:mt-3 md:hidden">
 	            <div className="flex items-center justify-between gap-3">
 	              <div className="min-w-0">
 	                <p className={`text-[11px] uppercase tracking-[0.18em] ${chrome.overline}`}>
@@ -4082,7 +4056,7 @@ function MoveWizardModal({
 	                <button
 	                  type="button"
 	                  onClick={() => setStepMenuOpen((prev) => !prev)}
-	                  className={`relative z-30 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
+	                  className={`relative z-30 inline-flex items-center gap-2 rounded-xl border px-2.5 py-1.5 text-[13px] transition ${
 	                    lightMode
 	                      ? "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
 	                      : "border-white/10 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
@@ -4147,7 +4121,7 @@ function MoveWizardModal({
 		          </div>
 
 		          <div
-		            className="hidden xl:grid xl:grid-cols-2 xl:gap-2 xl:[grid-template-columns:repeat(var(--wizard-steps),minmax(0,1fr))]"
+		            className="mt-4 hidden md:flex md:w-full md:flex-nowrap md:gap-1.5 [@media(max-height:640px)]:mt-2"
 		            style={{ ["--wizard-steps" as never]: visibleWizardSteps.length }}
 		          >
 		            {visibleWizardSteps.map((step, visibleIndex) => {
@@ -4160,7 +4134,7 @@ function MoveWizardModal({
 		                  key={step.id}
 		                  type="button"
 		                  onClick={() => setCurrentStepId(step.id)}
-		                  className={`rounded-2xl px-3 py-3 text-left transition ${
+		                  className={`min-w-0 flex-1 basis-0 rounded-2xl px-3 py-2 text-center transition flex flex-col items-center justify-center md:px-3 md:py-2 ${
 		                    isActive
 		                      ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/20"
 		                      : isCompleted
@@ -4170,12 +4144,14 @@ function MoveWizardModal({
 		                        : lightMode
 		                          ? "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
 		                          : "bg-zinc-900 text-zinc-300 ring-1 ring-white/10 hover:bg-zinc-800"
-		                  }`}
+		                    }`}
 		                >
-		                  <p className={`text-[11px] uppercase tracking-[0.16em] ${isActive ? "text-white/75" : "text-[#FF007F]"}`}>
+		                  <p className={`text-[10px] uppercase tracking-[0.16em] ${isActive ? "text-white/75" : "text-[#FF007F]"}`}>
 		                    Seite {visibleIndex + 1}
 		                  </p>
-		                  <p className="mt-1 text-sm font-medium">{step.title}</p>
+		                  <p className="mt-1 w-full truncate text-[13px] font-medium">
+		                    {step.title}
+		                  </p>
 		                </button>
 		              );
 		            })}

@@ -1,93 +1,53 @@
 import { NextResponse } from "next/server";
+
 import bcrypt from "bcryptjs";
 
+import { createSessionToken, normalizeUsername, setSessionCookie } from "@/lib/auth";
 import { ensureOrganization, getOrgKeyFromRequest } from "@/lib/org-context";
 import { getPrismaClient } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-type LoginPayload = {
-  username?: string;
-  password?: string;
-};
-
-const userCookieName = "movescout_user";
-const sessionMaxAgeSeconds = 60 * 60 * 24;
-
-function getBootstrapAdminCredentials() {
-  return {
-    username: (process.env.MOVESCOUT_BOOTSTRAP_ADMIN_USERNAME?.trim() || "Admin").trim(),
-    password: process.env.MOVESCOUT_BOOTSTRAP_ADMIN_PASSWORD?.trim() || "Admin123",
-  };
+function getBootstrapCredentials() {
+  const username = normalizeUsername(process.env.MOVESCOUT_BOOTSTRAP_ADMIN_USERNAME?.trim() || "admin") || "admin";
+  const password = (process.env.MOVESCOUT_BOOTSTRAP_ADMIN_PASSWORD?.trim() || "movescout").trim() || "movescout";
+  return { username, password };
 }
 
-async function ensureDefaultAdmin(prisma: NonNullable<ReturnType<typeof getPrismaClient>>, orgKey: string) {
-  const bootstrap = getBootstrapAdminCredentials();
-  const existingAny = await prisma.user.findFirst({ where: { orgKey } });
-  if (!existingAny) {
-    await prisma.user.create({
-      data: {
-        displayName: "Administrator",
-        username: bootstrap.username,
-        passwordHash: await bcrypt.hash(bootstrap.password, 10),
-        orgKey,
-        role: "OWNER",
-      },
-    });
-    return;
-  }
+async function ensureBootstrapUser(orgKey: string) {
+  const prisma = getPrismaClient();
+  if (!prisma) return;
 
-  const adminUser = await prisma.user.findFirst({
+  const bootstrap = getBootstrapCredentials();
+  const existing = await prisma.user.findFirst({
     where: { orgKey, username: { equals: bootstrap.username, mode: "insensitive" } },
   });
+  if (existing?.passwordHash) return;
 
-  if (!adminUser) {
-    const ownerWithoutPassword = await prisma.user.findFirst({
-      where: { orgKey, role: "OWNER", passwordHash: null },
-      orderBy: [{ createdAt: "asc" }],
-    });
+  const passwordHash = await bcrypt.hash(bootstrap.password, 10);
 
-    if (ownerWithoutPassword) {
-      await prisma.user.update({
-        where: { id: ownerWithoutPassword.id },
-        data: { username: bootstrap.username, passwordHash: await bcrypt.hash(bootstrap.password, 10) },
-      });
-      return;
-    }
-
-    await prisma.user.create({
+  if (existing) {
+    await prisma.user.update({
+      where: { id: existing.id },
       data: {
-        displayName: "Administrator",
         username: bootstrap.username,
-        passwordHash: await bcrypt.hash(bootstrap.password, 10),
-        orgKey,
-        role: "OWNER",
+        passwordHash,
+        displayName: existing.displayName || "Administrator",
+        role: existing.role || "OWNER",
       },
     });
     return;
   }
 
-  if (!adminUser.passwordHash) {
-    await prisma.user.update({
-      where: { id: adminUser.id },
-      data: { username: bootstrap.username, passwordHash: await bcrypt.hash(bootstrap.password, 10) },
-    });
-    return;
-  }
-
-  const matchesLegacy =
-    (await bcrypt.compare("Admin", adminUser.passwordHash)) ||
-    (await bcrypt.compare("Admin123", adminUser.passwordHash)) ||
-    (bootstrap.password !== "Admin" && (await bcrypt.compare(bootstrap.password, adminUser.passwordHash)));
-
-  if (!matchesLegacy) {
-    return;
-  }
-
-  await prisma.user.update({
-    where: { id: adminUser.id },
-    data: { username: bootstrap.username, passwordHash: await bcrypt.hash(bootstrap.password, 10) },
+  await prisma.user.create({
+    data: {
+      orgKey,
+      username: bootstrap.username,
+      passwordHash,
+      displayName: "Administrator",
+      role: "OWNER",
+    },
   });
 }
 
@@ -99,26 +59,25 @@ export async function POST(request: Request) {
     }
 
     const orgKey = getOrgKeyFromRequest(request);
-    await ensureOrganization(orgKey);
-    await ensureDefaultAdmin(prisma, orgKey);
-
-    let payload: LoginPayload;
-    try {
-      payload = (await request.json()) as LoginPayload;
-    } catch {
-      return NextResponse.json({ message: "Die API erwartet JSON." }, { status: 400 });
+    const organization = await ensureOrganization(orgKey);
+    if (!organization) {
+      return NextResponse.json({ message: "Organisation konnte nicht initialisiert werden." }, { status: 500 });
     }
 
-    const username = String(payload.username ?? "").trim();
-    const password = String(payload.password ?? "");
+    await ensureBootstrapUser(orgKey);
+
+    const body = (await request.json().catch(() => null)) as null | { username?: string; password?: string };
+    const username = normalizeUsername(body?.username || "");
+    const password = String(body?.password || "");
 
     if (!username || !password) {
-      return NextResponse.json({ message: "Benutzername und Passwort sind Pflicht." }, { status: 422 });
+      return NextResponse.json({ message: "Bitte Benutzername und Passwort eingeben." }, { status: 400 });
     }
 
-    const user = await prisma.user.findFirst({
-      where: { orgKey, username: { equals: username, mode: "insensitive" } },
-    });
+    const user =
+      (await prisma.user.findFirst({
+        where: { orgKey, username: { equals: username, mode: "insensitive" } },
+      })) ?? null;
 
     if (!user?.passwordHash) {
       return NextResponse.json({ message: "Login fehlgeschlagen." }, { status: 401 });
@@ -129,27 +88,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Login fehlgeschlagen." }, { status: 401 });
     }
 
-    const response = NextResponse.json({
-      message: "Login erfolgreich.",
-      user: {
-        id: user.id,
-        displayName: user.displayName,
-        username: user.username,
-        role: user.role,
-      },
+    const token = await createSessionToken({ orgKey, userId: user.id, role: user.role });
+    await setSessionCookie(token);
+
+    return NextResponse.json({
+      ok: true,
+      organization: { orgKey: organization.orgKey, name: organization.name },
+      user: { id: user.id, displayName: user.displayName, email: user.email, role: user.role },
     });
-
-    const secure = process.env.NODE_ENV === "production";
-    response.headers.append(
-      "Set-Cookie",
-      `${userCookieName}=${encodeURIComponent(user.id)}; Path=/; SameSite=Lax; Max-Age=${sessionMaxAgeSeconds}; HttpOnly${secure ? "; Secure" : ""}`,
-    );
-
-    return response;
   } catch {
-    return NextResponse.json(
-      { message: "Login derzeit nicht möglich. Bitte Datenbank/`DATABASE_URL` prüfen." },
-      { status: 503 },
-    );
+    return NextResponse.json({ message: "Login nicht möglich. Bitte später erneut versuchen." }, { status: 500 });
   }
 }
+

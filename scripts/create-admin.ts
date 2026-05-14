@@ -1,13 +1,13 @@
-import "dotenv/config";
+import "./load-env.cjs";
 
 import crypto from "node:crypto";
 
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
-import { Pool } from "pg";
 
 import { PrismaClient } from "../src/generated/prisma/client";
 import { resolvePrismaDatabaseUrls } from "../src/lib/prisma-database-url";
+import { createPgPool } from "../src/lib/pg-pool";
 
 type ArgMap = Record<string, string | boolean>;
 
@@ -115,7 +115,7 @@ async function main() {
     return;
   }
 
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = createPgPool(databaseUrl);
   const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
   let plainPassword = getStringArg(args, "password");
@@ -165,4 +165,3 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
-

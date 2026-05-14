@@ -231,19 +231,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
     async function loadSession() {
       try {
         const response = await fetch("/api/session", { cache: "no-store" });
-        if (response.status === 401) {
-          if (!aborted && pathname !== "/login") {
-            router.push(`/login?next=${encodeURIComponent(pathname)}`);
-            router.refresh();
-          }
-          return;
-        }
         const payload = (await response.json()) as {
           organization?: { name: string; orgKey: string };
           user?: { displayName: string; role: string };
         };
 
         if (!response.ok || !payload.user) {
+          if (response.status === 401 && pathname !== "/login") {
+            router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+          }
           return;
         }
 
@@ -265,7 +261,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     return () => {
       aborted = true;
     };
-  }, [pathname, router]);
+  }, [pathname]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");
@@ -304,8 +300,14 @@ export default function AppShell({ children }: { children: ReactNode }) {
       return;
     }
 
-    setSidebarCollapsed(true);
-    setUserMenuOpen(false);
+    const timeoutId = window.setTimeout(() => {
+      setSidebarCollapsed(true);
+      setUserMenuOpen(false);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [compactSidebar]);
 
   useEffect(() => {
@@ -321,16 +323,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
   }, [sidebarFlyout]);
 
   async function logout() {
+    setMobilePanel(null);
+    setUserMenuOpen(false);
+    setSidebarFlyout(null);
+    setSessionUser(null);
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } catch {
       // ignore
     } finally {
-      setMobilePanel(null);
-      setUserMenuOpen(false);
-      setSidebarFlyout(null);
-      router.push("/login");
-      router.refresh();
+      router.replace("/login");
     }
   }
 

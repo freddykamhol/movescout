@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { sendUserInviteMailForOrg } from "@/lib/auth/user-mails";
 import { ensureOrganization, getOrgKeyFromRequest } from "@/lib/org-context";
 import { getPrismaClient } from "@/lib/prisma";
 
@@ -49,7 +48,6 @@ export async function POST(request: Request) {
 
   const orgKey = getOrgKeyFromRequest(request);
   await ensureOrganization(orgKey);
-  const origin = new URL(request.url).origin;
 
   let payload: CreateUserPayload;
   try {
@@ -73,14 +71,6 @@ export async function POST(request: Request) {
       role: payload.role ?? "MEMBER",
     },
   });
-
-  if (user.email) {
-    try {
-      await sendUserInviteMailForOrg(orgKey, { id: user.id, displayName: user.displayName, email: user.email }, origin);
-    } catch (error) {
-      console.error("Einladung konnte nicht versendet werden.", error);
-    }
-  }
 
   return NextResponse.json({ message: "Benutzer wurde angelegt.", user });
 }
