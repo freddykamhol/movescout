@@ -19,14 +19,12 @@ import {
   BedSingle,
   Building2,
   CarFront,
-  ChevronDown,
   CircleParking,
   CookingPot,
   House,
   MapPin,
   Plus,
   Route,
-  Search,
   ShowerHead,
   Sofa,
   Sparkles,
@@ -35,7 +33,7 @@ import {
 } from "lucide-react";
 
 import { getPageChrome } from "@/app/_components/page-styles";
-import { furnitureCategories, getFurnitureCategoryLabel, type FurnitureCategoryId } from "@/lib/furniture-categories";
+import { getFurnitureCategoryLabel, type FurnitureCategoryId } from "@/lib/furniture-categories";
 import { furnitureCatalog, type FurnitureCatalogItem } from "@/lib/furniture-catalog";
 import { defaultMovePricingConfig, type MovePricingConfig } from "@/lib/move-pricing";
 import {
@@ -1230,10 +1228,7 @@ function MoveWizardModal({
   const lastCalculationRequestKeyRef = useRef<string>("");
 
   useEffect(() => {
-    if (!isEditMode || !moveId) {
-      setEditingMoveMeta(null);
-      return;
-    }
+    if (!isEditMode || !moveId) return;
 
     let cancelled = false;
     async function loadMoveForEdit() {
@@ -1330,7 +1325,13 @@ function MoveWizardModal({
     return baseWizardSteps.filter((step) => hasKitchenRoom || step.id !== "kitchen");
   }, [wizardData.roomSelections]);
   const visibleWizardSteps = useMemo(() => wizardSteps.filter((step) => !step.hidden), [wizardSteps]);
-  const currentStepIndex = useMemo(() => wizardSteps.findIndex((step) => step.id === currentStepId), [currentStepId, wizardSteps]);
+  const safeCurrentStepId = useMemo(() => {
+    return wizardSteps.some((step) => step.id === currentStepId) ? currentStepId : (wizardSteps[0]?.id ?? "customer");
+  }, [currentStepId, wizardSteps]);
+  const currentStepIndex = useMemo(
+    () => wizardSteps.findIndex((step) => step.id === safeCurrentStepId),
+    [safeCurrentStepId, wizardSteps],
+  );
   const currentStep = wizardSteps[Math.max(currentStepIndex, 0)] ?? wizardSteps[0];
   const visibleStepIndex = useMemo(
     () => Math.max(0, visibleWizardSteps.findIndex((step) => step.id === currentStep.id)),
@@ -1372,48 +1373,22 @@ function MoveWizardModal({
       items: wizardData.furnitureSelections.filter((furniture) => furniture.room === roomLabel),
     }))
     .filter((group) => group.items.length > 0);
-  const resolvedActiveFurnitureRoomLabel = useMemo<RoomLabel | null>(() => {
-    if (activeFurnitureRoomLabel && selectedRoomLabels.includes(activeFurnitureRoomLabel)) {
-      return activeFurnitureRoomLabel;
-    }
-
-    return selectedRoomLabels[0] ?? null;
-  }, [activeFurnitureRoomLabel, selectedRoomLabels]);
-  const manualFurnitureOptionsForActiveRoom = useMemo(() => {
-    if (!resolvedActiveFurnitureRoomLabel) return [];
-
-    return furnitureCatalog
-      .filter((catalogItem) => catalogItem.rooms.includes(resolvedActiveFurnitureRoomLabel))
-      .sort((left, right) => left.furnitureName.localeCompare(right.furnitureName, "de"));
-  }, [resolvedActiveFurnitureRoomLabel]);
-  const missingStandardFurnitureForActiveRoom = useMemo(
-    () => missingStandardFurnitureOptions.filter((option) => option.roomLabel === resolvedActiveFurnitureRoomLabel),
-    [missingStandardFurnitureOptions, resolvedActiveFurnitureRoomLabel],
-  );
-  const selectedManualFurnitureCatalogItem = useMemo(() => {
-    if (!selectedFurnitureCatalogItemId || !resolvedActiveFurnitureRoomLabel) return null;
-    return (
-      manualFurnitureOptionsForActiveRoom.find((catalogItem) => catalogItem.id === selectedFurnitureCatalogItemId) ?? null
-    );
-  }, [manualFurnitureOptionsForActiveRoom, resolvedActiveFurnitureRoomLabel, selectedFurnitureCatalogItemId]);
-
-  useEffect(() => {
-    if (!resolvedActiveFurnitureRoomLabel) {
-      setActiveFurnitureRoomLabel(null);
-      setSelectedFurnitureCatalogItemId("");
-      return;
-    }
-
-    setActiveFurnitureRoomLabel((current) => {
-      if (current && selectedRoomLabels.includes(current)) return current;
-      return resolvedActiveFurnitureRoomLabel;
-    });
-    setSelectedFurnitureCatalogItemId((current) => {
-      if (!current) return current;
-      const stillValid = manualFurnitureOptionsForActiveRoom.some((catalogItem) => catalogItem.id === current);
-      return stillValid ? current : "";
-    });
-  }, [manualFurnitureOptionsForActiveRoom, resolvedActiveFurnitureRoomLabel, selectedRoomLabels]);
+  const resolvedActiveFurnitureRoomLabel =
+    activeFurnitureRoomLabel && selectedRoomLabels.includes(activeFurnitureRoomLabel)
+      ? activeFurnitureRoomLabel
+      : (selectedRoomLabels[0] ?? null);
+  const manualFurnitureOptionsForActiveRoom = resolvedActiveFurnitureRoomLabel
+    ? furnitureCatalog
+        .filter((catalogItem) => catalogItem.rooms.includes(resolvedActiveFurnitureRoomLabel))
+        .sort((left, right) => left.furnitureName.localeCompare(right.furnitureName, "de"))
+    : [];
+  const missingStandardFurnitureForActiveRoom = resolvedActiveFurnitureRoomLabel
+    ? missingStandardFurnitureOptions.filter((option) => option.roomLabel === resolvedActiveFurnitureRoomLabel)
+    : [];
+  const selectedManualFurnitureCatalogItem =
+    resolvedActiveFurnitureRoomLabel && selectedFurnitureCatalogItemId
+      ? manualFurnitureOptionsForActiveRoom.find((catalogItem) => catalogItem.id === selectedFurnitureCatalogItemId) ?? null
+      : null;
   const sourceLabel = options?.sourceLabel ?? "Allgemein";
   const customerNumber = editingMoveMeta?.customerNumber ?? options?.customerPrefill?.customerNumber;
   const stepProgressPercent =
@@ -1431,7 +1406,17 @@ function MoveWizardModal({
     () => getMoveCalculationReadiness(routeCalculationRequest),
     [routeCalculationRequest],
   );
-  const routeCalculationData = moveCalculation.data;
+  const moveCalculationView: MoveCalculationUiState = routeCalculationReadiness.isReady
+    ? moveCalculation
+    : {
+        data: null,
+        message:
+          routeCalculationReadiness.warnings[0] ??
+          "Start- und Zieladresse ergänzen, dann berechnen wir Route und Preis live.",
+        status: "idle",
+        warnings: routeCalculationReadiness.warnings,
+      };
+  const routeCalculationData = moveCalculationView.data;
   const populatedStopAddresses = wizardData.stopAddresses.filter((stopAddress) => hasAnyAddressData(stopAddress));
   const stopOrderChanged =
     routeCalculationData !== null &&
@@ -1440,13 +1425,13 @@ function MoveWizardModal({
   const routeDistanceLabel =
     routeCalculationData !== null
       ? formatKilometersLabel(routeCalculationData.route.distanceKilometers)
-      : moveCalculation.status === "loading"
+      : moveCalculationView.status === "loading"
         ? "Berechne..."
         : "Noch offen";
   const routeDurationLabel =
     routeCalculationData !== null
       ? formatDurationLabel(routeCalculationData.route.durationMinutes)
-      : moveCalculation.status === "loading"
+      : moveCalculationView.status === "loading"
         ? "Schnellste Strecke wird berechnet"
         : "Sobald Start und Ziel vollständig sind";
   const routeSequenceLabel =
@@ -1546,7 +1531,7 @@ function MoveWizardModal({
   const livePriceLabel =
     routeCalculationData !== null
       ? priceFormatter.format(grandTotalPrice)
-      : moveCalculation.status === "loading"
+      : moveCalculationView.status === "loading"
         ? "Berechne..."
         : manualServicesTotalPrice > 0
           ? `+ ${priceFormatter.format(manualServicesTotalPrice)} Zusatz`
@@ -1578,28 +1563,20 @@ function MoveWizardModal({
             routeCalculationData.pricing.disposalPrice,
         )
       : "-";
-  const visibleMoveCalculationWarnings = Array.from(new Set(moveCalculation.warnings)).filter(
-    (warning) => warning !== moveCalculation.message,
+  const visibleMoveCalculationWarnings = Array.from(new Set(moveCalculationView.warnings)).filter(
+    (warning) => warning !== moveCalculationView.message,
   );
-  const acuteMoveCalculationError = moveCalculation.status === "error" ? moveCalculation.message : null;
-	  const routeStatusLabel =
-	    routeCalculationData !== null
-	      ? routeCalculationData.provider === "osrm"
-	        ? "Schnellste Straßenroute live berechnet"
-	        : "Fallback aktiv: Strecke aktuell aus Luftlinien-Näherung"
-	      : moveCalculation.status === "loading"
+  const acuteMoveCalculationError = moveCalculationView.status === "error" ? moveCalculationView.message : null;
+ 	  const routeStatusLabel =
+ 	    routeCalculationData !== null
+ 	      ? routeCalculationData.provider === "osrm"
+ 	        ? "Schnellste Straßenroute live berechnet"
+ 	        : "Fallback aktiv: Strecke aktuell aus Luftlinien-Näherung"
+	      : moveCalculationView.status === "loading"
 	        ? "Schnellste Route und Preis werden gerade berechnet."
-	        : moveCalculation.status === "error"
+	        : moveCalculationView.status === "error"
 	          ? null
-	          : moveCalculation.message;
-
-  useEffect(() => {
-    if (currentStepIndex >= 0) {
-      return;
-    }
-
-    setCurrentStepId(wizardSteps[0]?.id ?? "customer");
-  }, [currentStepIndex, wizardSteps]);
+	          : moveCalculationView.message;
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -1659,14 +1636,6 @@ function MoveWizardModal({
     if (!routeCalculationReadiness.isReady) {
       calculationRetryAttemptRef.current = 0;
       lastCalculationRequestKeyRef.current = "";
-      setMoveCalculation({
-        data: null,
-        message:
-          routeCalculationReadiness.warnings[0] ??
-          "Start- und Zieladresse ergänzen, dann berechnen wir Route und Preis live.",
-        status: "idle",
-        warnings: routeCalculationReadiness.warnings,
-      });
       return;
     }
 

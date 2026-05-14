@@ -239,11 +239,6 @@ function ScheduleModal({
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    setStartValue("");
-    setEndValue("");
-  }, [move.id]);
-
   async function save() {
     setIsSaving(true);
     setErrorMessage(null);
@@ -317,17 +312,21 @@ function UmzuegePageContent({ initialMoves }: { initialMoves: MoveRecord[] }) {
   const { lightMode } = useDashboardAppearance();
   const { openMoveWizard } = useMoveWizard();
   const chrome = getPageChrome(lightMode);
-  const [moves, setMoves] = useState(initialMoves);
+  const [optimisticStatusByMoveId, setOptimisticStatusByMoveId] = useState<Record<string, MoveRecord["status"]>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [openMenuMoveId, setOpenMenuMoveId] = useState<string | null>(null);
   const [scheduleMove, setScheduleMove] = useState<MoveRecord | null>(null);
   const [statusMessage, setStatusMessage] = useState(
     "Die Umzugsliste arbeitet jetzt mit echten Daten aus der Datenbank und legt für neue Einträge automatisch Unterordner an.",
   );
-
-  useEffect(() => {
-    setMoves(initialMoves);
-  }, [initialMoves]);
+  const moves = useMemo(
+    () =>
+      initialMoves.map((move) => {
+        const optimisticStatus = optimisticStatusByMoveId[move.id];
+        return optimisticStatus ? { ...move, status: optimisticStatus } : move;
+      }),
+    [initialMoves, optimisticStatusByMoveId],
+  );
 
   const deferredSearchTerm = useDeferredValue(searchTerm);
   const normalizedSearch = deferredSearchTerm.trim().toLowerCase();
@@ -386,7 +385,7 @@ function UmzuegePageContent({ initialMoves }: { initialMoves: MoveRecord[] }) {
         throw new Error(payload.message ?? "Status konnte nicht aktualisiert werden.");
       }
 
-      setMoves((previous) => previous.map((entry) => (entry.id === move.id ? { ...entry, status: "COMPLETED" } : entry)));
+      setOptimisticStatusByMoveId((previous) => ({ ...previous, [move.id]: "COMPLETED" }));
       setStatusMessage(`Umzug ${move.moveNumber} wurde abgeschlossen.`);
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Status konnte nicht aktualisiert werden.");
@@ -538,13 +537,14 @@ function UmzuegePageContent({ initialMoves }: { initialMoves: MoveRecord[] }) {
 	        )}
 	      </section>
 
-	      {scheduleMove ? (
-	        <ScheduleModal
-	          lightMode={lightMode}
-	          move={scheduleMove}
-	          onClose={() => setScheduleMove(null)}
-	          onSaved={() => {
-	            router.refresh();
+		      {scheduleMove ? (
+		        <ScheduleModal
+              key={scheduleMove.id}
+		          lightMode={lightMode}
+		          move={scheduleMove}
+		          onClose={() => setScheduleMove(null)}
+		          onSaved={() => {
+		            router.refresh();
 	            setStatusMessage(`Zeitraum für ${scheduleMove.moveNumber} gespeichert. Status ist jetzt „Geplant“.`);
 	          }}
 	        />

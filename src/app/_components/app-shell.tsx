@@ -261,7 +261,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     return () => {
       aborted = true;
     };
-  }, [pathname]);
+  }, [pathname, router]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");
