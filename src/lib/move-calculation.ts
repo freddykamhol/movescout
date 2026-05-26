@@ -333,6 +333,22 @@ function calculateFurnitureVolumePrice(totalVolumeCubicMeters: number, pricingCo
     (hasDecimalShare ? pricingConfig.furnitureCubicMeterDecimalPrice : 0);
 }
 
+function calculateDisposalVolumePrice(totalVolumeCubicMeters: number, pricingConfig: MovePricingConfig = movePricingConfig) {
+  if (totalVolumeCubicMeters <= 0) {
+    return 0;
+  }
+
+  const fullCubicMeters = Math.floor(totalVolumeCubicMeters);
+  const hasDecimalShare = totalVolumeCubicMeters - fullCubicMeters > 0.000001;
+  const decimalPrice = pricingConfig.disposalPricePerCubicMeter * 0.5;
+
+  return fullCubicMeters * pricingConfig.disposalPricePerCubicMeter + (hasDecimalShare ? decimalPrice : 0);
+}
+
+function calculateDisposalItemPrice(volumeCubicMeters: number, pricingConfig: MovePricingConfig = movePricingConfig) {
+  return roundCurrency(calculateDisposalVolumePrice(volumeCubicMeters, pricingConfig));
+}
+
 export function calculateMovePricing(
   routeKilometers: number,
   addresses: MoveCalculationAddressInput[],
@@ -374,7 +390,7 @@ export function calculateMovePricing(
       },
       disassemblyPrice: furnitureSelection.isDisassembly ? pricingConfig.disassemblyPricePerItem : 0,
       disposalPrice: furnitureSelection.isDisposal
-        ? roundCurrency(volumeCubicMeters * pricingConfig.disposalPricePerCubicMeter)
+        ? calculateDisposalItemPrice(volumeCubicMeters, pricingConfig)
         : 0,
       furnitureId: furnitureSelection.id,
       furnitureName: furnitureSelection.furnitureName,
@@ -392,7 +408,6 @@ export function calculateMovePricing(
   const noParkingZonePrice = addressCharges.reduce((sum, addressCharge) => sum + addressCharge.noParkingZonePrice, 0);
   const furnitureVolumeCubicMeters = roundVolume(
     furnitureCharges
-      .filter((furnitureCharge) => !furnitureCharge.isDisposal)
       .reduce((sum, furnitureCharge) => sum + furnitureCharge.volumeCubicMeters, 0),
   );
   const furnitureVolumePrice = calculateFurnitureVolumePrice(furnitureVolumeCubicMeters, pricingConfig);

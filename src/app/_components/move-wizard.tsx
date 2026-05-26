@@ -1069,40 +1069,37 @@ function FurnitureSelectionCard({
 
   return (
     <article className={chrome.subtlePanel}>
-      <div className="relative">
-        <button
-          type="button"
-          onClick={onRemove}
-          className={`absolute right-0 top-0 inline-flex h-9 w-9 items-center justify-center rounded-xl border text-sm transition ${
-            lightMode
-              ? "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
-              : "border-white/10 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
-          }`}
-          aria-label="Möbel entfernen"
-          title="Entfernen"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+	      <div className="relative">
+	        <button
+	          type="button"
+	          onClick={onRemove}
+	          className={`absolute right-0 top-0 inline-flex h-8 w-8 items-center justify-center rounded-lg border text-sm transition ${
+	            lightMode
+	              ? "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+	              : "border-white/10 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
+	          }`}
+	          aria-label="Möbel entfernen"
+	          title="Entfernen"
+	        >
+	          <Trash2 className="h-4 w-4" />
+	        </button>
 
-        <div className="pr-11">
-          <div className="flex flex-wrap items-center gap-2">
-            <h4 className={`text-sm font-semibold ${lightMode ? "text-zinc-900" : "text-zinc-100"}`}>{furniture.furnitureName}</h4>
-            <span className={chrome.neutralChip}>{furniture.room}</span>
-            <span className={chrome.chip}>{getFurnitureCategoryLabel(furniture.category)}</span>
-            <div className="hidden w-full min-w-0 flex-1 grid-cols-3 gap-2 md:grid md:portrait:hidden xl:hidden">
-              {dimensionInputs}
-            </div>
+	        <div className="pr-10">
+	          <div className="flex flex-wrap items-center gap-2">
+	            <h4 className={`text-sm font-semibold ${lightMode ? "text-zinc-900" : "text-zinc-100"}`}>{furniture.furnitureName}</h4>
+	            <span className={chrome.neutralChip}>{furniture.room}</span>
+	            <span className={chrome.chip}>{getFurnitureCategoryLabel(furniture.category)}</span>
           </div>
-          <p className={`mt-1 text-xs ${chrome.mutedText}`}>Leistungen markieren (Aufbau/Abbau/Entrümpeln).</p>
+	          <p className={`mt-1 text-xs ${chrome.mutedText}`}>Leistungen markieren.</p>
 
-          <div className="mt-2 grid w-full grid-cols-3 gap-2 md:hidden md:portrait:grid xl:grid">
+          <div className="mt-2 grid w-full grid-cols-3 gap-2">
             {dimensionInputs}
           </div>
         </div>
       </div>
 
-      <div className="mt-3">
-        <div className="grid w-full grid-cols-3 gap-2">
+	      <div className="mt-2.5">
+	        <div className="grid w-full grid-cols-3 gap-2">
           <CheckboxField
             checked={furniture.isDisposal}
             label="Entrümpeln"
@@ -2860,8 +2857,8 @@ function MoveWizardModal({
 
 	    if (currentStep.id === "addresses") {
 	      return (
-	        <div className="grid gap-4">
-	          <section className={chrome.panel}>
+		        <div className="grid gap-3">
+		          <section className={chrome.panel}>
 	            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
 	              <div>
 	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Adressen</h3>
@@ -3204,9 +3201,9 @@ function MoveWizardModal({
         );
       }
 
-	      return (
-	        <div className="grid gap-4">
-	          <section className={chrome.panel}>
+		      return (
+		        <div className="grid gap-3">
+		          <section className={chrome.panel}>
 	            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
 	              <div>
 	                <h3 className={`${chrome.sectionTitle} [@media(max-height:640px)]:hidden`}>Möbelauswahl</h3>
@@ -3221,54 +3218,9 @@ function MoveWizardModal({
               </div>
             </div>
 
-	            <div className="mt-4 grid gap-3 lg:grid-cols-3 [@media(max-height:640px)]:hidden">
-	              <div className={`${chrome.subtleInset} flex items-start gap-3`}>
-	                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-	                  lightMode ? "bg-white text-[#FF007F] ring-1 ring-zinc-200" : "bg-zinc-950 text-[#ff8cc5] ring-1 ring-white/10"
-	                }`}>
-                  <MapPin className="h-5 w-5" strokeWidth={1.9} />
-                </div>
-                <div>
-                  <p className={chrome.statLabel}>Raumkategorien</p>
-                  <p className={`mt-2 text-2xl font-semibold ${chrome.bodyText}`}>{selectedRoomLabels.length}</p>
-                  <p className={`mt-1 text-sm ${chrome.mutedText}`}>{selectedRoomLabels.join(", ")}</p>
-                </div>
-              </div>
-
-              <div className={`${chrome.subtleInset} flex items-start gap-3`}>
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                  lightMode ? "bg-white text-[#FF007F] ring-1 ring-zinc-200" : "bg-zinc-950 text-[#ff8cc5] ring-1 ring-white/10"
-                }`}>
-                  <Plus className="h-5 w-5" strokeWidth={1.9} />
-                </div>
-                <div>
-                  <p className={chrome.statLabel}>Möbelkarten</p>
-                  <p className={`mt-2 text-2xl font-semibold ${chrome.bodyText}`}>{wizardData.furnitureSelections.length}</p>
-                  <p className={`mt-1 text-sm ${chrome.mutedText}`}>Manuell hinzugefügt oder aus Standardmöbeln übernommen.</p>
-                </div>
-              </div>
-
-              <div className={`${chrome.subtleInset} flex items-start gap-3`}>
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                  lightMode ? "bg-white text-[#FF007F] ring-1 ring-zinc-200" : "bg-zinc-950 text-[#ff8cc5] ring-1 ring-white/10"
-                }`}>
-                  <Sparkles className="h-5 w-5" strokeWidth={1.9} />
-                </div>
-                <div>
-                  <p className={chrome.statLabel}>Standardmöbel offen</p>
-                  <p className={`mt-2 text-2xl font-semibold ${chrome.bodyText}`}>{missingStandardFurnitureOptions.length}</p>
-                  <p className={`mt-1 text-sm ${chrome.mutedText}`}>
-                    {missingStandardFurnitureOptions.length > 0
-                      ? "Diese Standardmöbel können gesammelt ergänzt werden."
-                      : "Alle verfügbaren Standardmöbel sind bereits angelegt."}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-	            <div className={`mt-4 ${chrome.subtleInset}`}>
-	              <div className="grid gap-4">
-	                <div className="flex flex-wrap gap-2">
+			            <div className={`mt-3 ${chrome.subtleInset}`}>
+			              <div className="grid gap-3">
+		                <div className="flex flex-wrap gap-2">
 	                  {selectedRoomLabels.map((roomLabel) => {
 	                    const isActive = roomLabel === resolvedActiveFurnitureRoomLabel;
 
@@ -3280,25 +3232,25 @@ function MoveWizardModal({
 	                          setActiveFurnitureRoomLabel(roomLabel);
 	                          setSelectedFurnitureCatalogItemId("");
 	                        }}
-	                        className={`rounded-2xl px-3 py-2 text-center text-sm font-medium transition ${
-	                          isActive
-	                            ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/20"
-	                            : lightMode
-	                              ? "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
-	                              : "bg-zinc-900 text-zinc-200 ring-1 ring-white/10 hover:bg-zinc-800"
-	                        }`}
-	                      >
-	                        {roomLabel}
-	                      </button>
-	                    );
-	                  })}
-	                </div>
+		                        className={`rounded-2xl px-2.5 py-1.5 text-center text-[13px] font-medium transition ${
+		                          isActive
+		                            ? "bg-[#FF007F] text-white shadow-lg shadow-[#FF007F]/20"
+		                            : lightMode
+		                              ? "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
+		                              : "bg-zinc-900 text-zinc-200 ring-1 ring-white/10 hover:bg-zinc-800"
+		                        }`}
+		                      >
+		                        {roomLabel}
+		                      </button>
+		                    );
+		                  })}
+		                </div>
 
-	                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-	                  <div className="grid gap-1.5">
-	                    <p className={`text-xs uppercase tracking-[0.18em] ${chrome.overline}`}>
-	                      Möbelauswahl: {resolvedActiveFurnitureRoomLabel}
-	                    </p>
+		                <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+		                  <div className="grid gap-1.5">
+		                    <p className={`text-xs uppercase tracking-[0.18em] ${chrome.overline}`}>
+		                      Möbelauswahl: {resolvedActiveFurnitureRoomLabel}
+		                    </p>
 	                    <select
 	                      value={selectedFurnitureCatalogItemId}
 	                      onChange={(event) => setSelectedFurnitureCatalogItemId(event.target.value)}
@@ -3313,66 +3265,25 @@ function MoveWizardModal({
 	                    </select>
 	                  </div>
 
-	                  <button
-	                    type="button"
-	                    onClick={addSelectedManualFurniture}
-	                    disabled={!selectedManualFurnitureCatalogItem}
-	                    className={`${chrome.actionButton} inline-flex items-center justify-center gap-2`}
-	                  >
-	                    <Plus className="h-4 w-4" />
-	                    Hinzufügen
-	                  </button>
-	                </div>
+		                  <button
+		                    type="button"
+		                    onClick={addSelectedManualFurniture}
+		                    disabled={!selectedManualFurnitureCatalogItem}
+		                    className={`${chrome.actionButton} inline-flex items-center justify-center gap-2`}
+		                  >
+		                    <Plus className="h-4 w-4" />
+		                    Hinzufügen
+		                  </button>
+		                </div>
 
-	                <div className="grid gap-2">
-	                  <div className="flex items-center justify-between gap-3">
-	                    <div>
-	                      <p className="text-sm font-semibold">Schnellhinzufügen</p>
-	                      <p className={`mt-1 text-sm ${chrome.mutedText}`}>Standardmöbel für {resolvedActiveFurnitureRoomLabel}.</p>
-	                    </div>
-	                    <span className={chrome.neutralChip}>{missingStandardFurnitureForActiveRoom.length}</span>
-	                  </div>
-
-	                  {missingStandardFurnitureForActiveRoom.length === 0 ? (
-	                    <div className={`${chrome.emptyState} px-4 py-4`}>Alle Standardmöbel für diesen Raum sind bereits angelegt.</div>
-	                  ) : (
-	                    <div className="flex flex-wrap gap-2">
-	                      {missingStandardFurnitureForActiveRoom.map((option) => (
-	                        <button
-	                          key={option.key}
-	                          type="button"
-	                          onClick={() => addFurnitureSelection(option)}
-	                          className={`rounded-2xl px-3 py-2 text-center text-[13px] font-medium transition ${
-	                            lightMode
-	                              ? "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
-	                              : "bg-zinc-900 text-zinc-200 ring-1 ring-white/10 hover:bg-zinc-800"
-	                          }`}
-	                        >
-	                          {option.catalogItem.furnitureName}
-	                        </button>
-	                      ))}
-	                    </div>
-	                  )}
-	                </div>
-
-	                <div className="flex flex-wrap gap-3 text-sm">
+	                <div className="flex flex-wrap gap-2 text-sm">
 	                  <div className={chrome.compactSurfaceMuted}>
 	                    {manualFurnitureOptionsForActiveRoom.length} Möbeloptionen in {resolvedActiveFurnitureRoomLabel}
 	                  </div>
 	                  <div className={chrome.compactSurfaceMuted}>
-	                    {missingStandardFurnitureOptions.length} Standardmöbel aktuell noch nicht übernommen
+	                    {missingStandardFurnitureOptions.length} Standardmöbel aktuell offen
 	                  </div>
 	                </div>
-
-	                <button
-	                  type="button"
-	                  onClick={addMissingStandardFurniture}
-	                  disabled={missingStandardFurnitureOptions.length === 0}
-	                  className={`${chrome.secondaryButton} inline-flex items-center justify-center gap-2`}
-	                >
-	                  <Sparkles className="h-4 w-4" />
-	                  Alle Standardmöbel hinzufügen
-	                </button>
 	              </div>
 	            </div>
           </section>
@@ -3397,7 +3308,7 @@ function MoveWizardModal({
                   <div className={`${chrome.compactSurfaceMuted} text-sm`}>{group.items.length} Karten</div>
                 </div>
 
-                <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                <div className="mt-3 grid grid-cols-2 gap-3">
                   {group.items.map((furniture) => (
                     <FurnitureSelectionCard
                       key={furniture.id}
@@ -3413,6 +3324,55 @@ function MoveWizardModal({
               </section>
             ))
           )}
+
+          <section className={chrome.panel}>
+            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h4 className={chrome.sectionTitle}>Schnellhinzufügen</h4>
+                <p className={chrome.sectionText}>Standardmöbel für {resolvedActiveFurnitureRoomLabel}.</p>
+              </div>
+              <span className={chrome.neutralChip}>{missingStandardFurnitureForActiveRoom.length}</span>
+            </div>
+
+            <div className={`mt-3 ${chrome.subtleInset}`}>
+              {missingStandardFurnitureForActiveRoom.length === 0 ? (
+                <div className={`${chrome.emptyState} px-4 py-3`}>Alle Standardmöbel für diesen Raum sind bereits angelegt.</div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {missingStandardFurnitureForActiveRoom.map((option) => (
+                    <button
+                      key={option.key}
+                      type="button"
+                      onClick={() => addFurnitureSelection(option)}
+                      className={`rounded-2xl px-2.5 py-1.5 text-center text-[13px] font-medium transition ${
+                        lightMode
+                          ? "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
+                          : "bg-zinc-900 text-zinc-200 ring-1 ring-white/10 hover:bg-zinc-800"
+                      }`}
+                    >
+                      {option.catalogItem.furnitureName}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-wrap gap-2 text-sm">
+                <div className={chrome.compactSurfaceMuted}>{manualFurnitureOptionsForActiveRoom.length} Möbeloptionen</div>
+                <div className={chrome.compactSurfaceMuted}>{missingStandardFurnitureOptions.length} Standardmöbel offen</div>
+              </div>
+              <button
+                type="button"
+                onClick={addMissingStandardFurniture}
+                disabled={missingStandardFurnitureOptions.length === 0}
+                className={`${chrome.secondaryButton} inline-flex items-center justify-center gap-2`}
+              >
+                <Sparkles className="h-4 w-4" />
+                Alle Standardmöbel hinzufügen
+              </button>
+            </div>
+          </section>
         </div>
       );
     }

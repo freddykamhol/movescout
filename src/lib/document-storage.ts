@@ -1,5 +1,6 @@
 import "server-only";
 
+import fs from "node:fs/promises";
 import path from "node:path";
 
 import { joinRemotePath, withSftpClientForOrg } from "@/lib/storage/sftp";
@@ -24,6 +25,14 @@ function getDefaultOrgKey() {
 
 function resolveOrgKey(orgKey: string | undefined) {
   return orgKey?.trim() || getDefaultOrgKey();
+}
+
+function isProduction() {
+  return process.env.NODE_ENV === "production";
+}
+
+function getLocalDocumentsRoot() {
+  return (process.env.MOVESCOUT_DOCUMENTS_ROOT?.trim() || path.join(process.cwd(), "data", "documents")).trim();
 }
 
 export function sanitizeStoragePathSegment(value: string) {
@@ -56,6 +65,68 @@ function formatFileDate(updatedAt: Date) {
 async function hasSftpBackend(orgKey: string) {
   const config = await getSftpConnectionConfigForOrg(orgKey);
   return Boolean(config);
+}
+
+async function ensureLocalDir(absolutePath: string) {
+  await fs.mkdir(absolutePath, { recursive: true });
+}
+
+function toPlatformPath(posixPath: string) {
+  return posixPath.split("/").join(path.sep);
+}
+
+function getOrgRootLocalAbsolute(orgKey: string) {
+  const root = getLocalDocumentsRoot();
+  return path.join(root, organizationsFolderName, sanitizeStoragePathSegment(resolveOrgKey(orgKey)));
+}
+
+async function resolveAbsoluteLocalDocumentPathForOrg(orgKey: string, relativePath: string) {
+  const resolvedOrgKey = resolveOrgKey(orgKey);
+  const sanitizedRelative = normalizeRelativePath(relativePath);
+
+  const orgRootAbs = path.resolve(getOrgRootLocalAbsolute(resolvedOrgKey));
+  const candidate = path.resolve(orgRootAbs, toPlatformPath(sanitizedRelative));
+  if (candidate !== orgRootAbs && !candidate.startsWith(`${orgRootAbs}${path.sep}`)) return null;
+
+  return { backend: "local" as const, absolutePath: candidate, relativePath: sanitizedRelative };
+}
+
+async function listFilesLocal(orgKey: string, folderRelativePath: string): Promise<StoredDocumentFile[]> {
+  const resolved = await resolveAbsoluteLocalDocumentPathForOrg(orgKey, folderRelativePath);
+  if (!resolved) return [];
+
+  try {
+    await ensureLocalDir(resolved.absolutePath);
+    const entries = await fs.readdir(resolved.absolutePath, { withFileTypes: true });
+    const fileEntries = await Promise.all(
+      entries
+        .filter((entry) => entry.isFile())
+        .map(async (entry) => {
+          const fileName = entry.name;
+          const absoluteFilePath = path.join(resolved.absolutePath, fileName);
+          const stat = await fs.stat(absoluteFilePath);
+          const updatedAt = formatFileDate(stat.mtime);
+          return {
+            fileName,
+            relativePath: path.posix.join(resolved.relativePath, fileName).replace(/\\/g, "/"),
+            title: fileName.replace(/\.[^.]+$/, ""),
+            updatedAt,
+            updatedAtTimestamp: stat.mtimeMs || stat.mtime.getTime(),
+          };
+        }),
+    );
+
+    return fileEntries
+      .sort((left, right) => right.updatedAtTimestamp - left.updatedAtTimestamp)
+      .map((file) => ({
+        fileName: file.fileName,
+        relativePath: file.relativePath,
+        title: file.title,
+        updatedAt: file.updatedAt,
+      }));
+  } catch {
+    return [];
+  }
 }
 
 async function listFilesSftp(orgKey: string, folderPath: string, relativeBasePath: string): Promise<StoredDocumentFile[]> {
@@ -123,24 +194,39 @@ export async function ensureCustomerDocumentStructure(customerNumber: string, or
   const resolvedOrgKey = resolveOrgKey(orgKey);
   const sftpEnabled = await hasSftpBackend(resolvedOrgKey);
 
-  if (!sftpEnabled) {
+  if (sftpEnabled) {
+    const orgRootRemote = await getOrgRootRemote(resolvedOrgKey);
+    const customerFolderPath = joinRemotePath(orgRootRemote, "Kunden", sanitizeStoragePathSegment(customerNumber));
+    const customerDocumentsFolderPath = joinRemotePath(customerFolderPath, customerDocumentsFolderName);
+    const customerMovesFolderPath = joinRemotePath(customerFolderPath, customerMovesFolderName);
+
+    await withSftpClientForOrg(resolvedOrgKey, async (client) => {
+      await client.mkdir(customerDocumentsFolderPath, true);
+      await client.mkdir(customerMovesFolderPath, true);
+    });
+
+    return {
+      customerDocumentsFolderPath,
+      customerFolderPath,
+      customerMovesFolderPath,
+    };
+  }
+
+  if (isProduction()) {
     throw new Error("SFTP ist nicht konfiguriert (Einstellungen → Integrationen).");
   }
 
-  const orgRootRemote = await getOrgRootRemote(resolvedOrgKey);
-  const customerFolderPath = joinRemotePath(orgRootRemote, "Kunden", sanitizeStoragePathSegment(customerNumber));
-  const customerDocumentsFolderPath = joinRemotePath(customerFolderPath, customerDocumentsFolderName);
-  const customerMovesFolderPath = joinRemotePath(customerFolderPath, customerMovesFolderName);
-
-  await withSftpClientForOrg(resolvedOrgKey, async (client) => {
-    await client.mkdir(customerDocumentsFolderPath, true);
-    await client.mkdir(customerMovesFolderPath, true);
-  });
+  const orgRootLocal = getOrgRootLocalAbsolute(resolvedOrgKey);
+  const customerFolderAbs = path.join(orgRootLocal, "Kunden", sanitizeStoragePathSegment(customerNumber));
+  const customerDocumentsFolderAbs = path.join(customerFolderAbs, customerDocumentsFolderName);
+  const customerMovesFolderAbs = path.join(customerFolderAbs, customerMovesFolderName);
+  await ensureLocalDir(customerDocumentsFolderAbs);
+  await ensureLocalDir(customerMovesFolderAbs);
 
   return {
-    customerDocumentsFolderPath,
-    customerFolderPath,
-    customerMovesFolderPath,
+    customerDocumentsFolderPath: customerDocumentsFolderAbs,
+    customerFolderPath: customerFolderAbs,
+    customerMovesFolderPath: customerMovesFolderAbs,
   };
 }
 
@@ -155,7 +241,20 @@ export async function ensureMoveDocumentStructure(customerNumber: string, moveNu
 
   const sftpEnabled = await hasSftpBackend(resolvedOrgKey);
   if (!sftpEnabled) {
-    throw new Error("SFTP ist nicht konfiguriert (Einstellungen → Integrationen).");
+    if (isProduction()) {
+      throw new Error("SFTP ist nicht konfiguriert (Einstellungen → Integrationen).");
+    }
+
+    const moveDocumentsFolderAbs = path.join(
+      customerMovesFolderPath,
+      sanitizeStoragePathSegment(moveNumber),
+      moveDocumentsFolderName,
+    );
+    await ensureLocalDir(moveDocumentsFolderAbs);
+    return {
+      moveDocumentsFolderPath: moveDocumentsFolderAbs,
+      moveFolderPath: path.dirname(moveDocumentsFolderAbs),
+    };
   }
 
   await withSftpClientForOrg(resolvedOrgKey, async (client) => {
@@ -171,18 +270,28 @@ export async function ensureMoveDocumentStructure(customerNumber: string, moveNu
 export async function ensureOrganizationBrandingFolder(orgKey: string) {
   const resolvedOrgKey = resolveOrgKey(orgKey);
   const sftpEnabled = await hasSftpBackend(resolvedOrgKey);
-  if (!sftpEnabled) {
+  if (sftpEnabled) {
+    const orgRootRemote = await getOrgRootRemote(resolvedOrgKey);
+    const folderPath = joinRemotePath(orgRootRemote, brandingFolderName);
+    await withSftpClientForOrg(resolvedOrgKey, async (client) => {
+      await client.mkdir(folderPath, true);
+    });
+
+    return {
+      brandingFolderPath: folderPath,
+      relativeBrandingFolderPath: brandingFolderName,
+    };
+  }
+
+  if (isProduction()) {
     throw new Error("SFTP ist nicht konfiguriert (Einstellungen → Integrationen).");
   }
 
-  const orgRootRemote = await getOrgRootRemote(resolvedOrgKey);
-  const folderPath = joinRemotePath(orgRootRemote, brandingFolderName);
-  await withSftpClientForOrg(resolvedOrgKey, async (client) => {
-    await client.mkdir(folderPath, true);
-  });
-
+  const orgRootLocal = getOrgRootLocalAbsolute(resolvedOrgKey);
+  const folderAbs = path.join(orgRootLocal, brandingFolderName);
+  await ensureLocalDir(folderAbs);
   return {
-    brandingFolderPath: folderPath,
+    brandingFolderPath: folderAbs,
     relativeBrandingFolderPath: brandingFolderName,
   };
 }
@@ -195,7 +304,34 @@ export async function renameCustomerDocumentStructure(previousCustomerNumber: st
 
   const sftpEnabled = await hasSftpBackend(resolvedOrgKey);
   if (!sftpEnabled) {
-    throw new Error("SFTP ist nicht konfiguriert (Einstellungen → Integrationen).");
+    if (isProduction()) {
+      throw new Error("SFTP ist nicht konfiguriert (Einstellungen → Integrationen).");
+    }
+
+    const orgRootLocal = getOrgRootLocalAbsolute(resolvedOrgKey);
+    const previousFolderAbs = path.join(orgRootLocal, "Kunden", sanitizeStoragePathSegment(previousCustomerNumber));
+    const nextFolderAbs = path.join(orgRootLocal, "Kunden", sanitizeStoragePathSegment(nextCustomerNumber));
+
+    const exists = async (absolutePath: string) => {
+      try {
+        await fs.stat(absolutePath);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const previousExists = await exists(previousFolderAbs);
+    const nextExists = await exists(nextFolderAbs);
+    if (previousExists && !nextExists) {
+      await ensureLocalDir(path.dirname(nextFolderAbs));
+      try {
+        await fs.rename(previousFolderAbs, nextFolderAbs);
+      } catch {
+        // ignore rename errors
+      }
+    }
+    return ensureCustomerDocumentStructure(nextCustomerNumber, resolvedOrgKey);
   }
 
   const orgRootRemote = await getOrgRootRemote(resolvedOrgKey);
@@ -220,7 +356,11 @@ export async function listCustomerDocumentFiles(customerNumber: string, orgKey?:
 
   const sftpEnabled = await hasSftpBackend(resolvedOrgKey);
   if (!sftpEnabled) {
-    throw new Error("SFTP ist nicht konfiguriert (Einstellungen → Integrationen).");
+    if (isProduction()) {
+      throw new Error("SFTP ist nicht konfiguriert (Einstellungen → Integrationen).");
+    }
+    const folderRel = getCustomerDocumentsFolderRelativePath(customerNumber);
+    return listFilesLocal(resolvedOrgKey, folderRel);
   }
 
   const orgRootRemote = await getOrgRootRemote(resolvedOrgKey);
@@ -240,7 +380,11 @@ export async function listMoveDocumentFiles(customerNumber: string, moveNumber: 
 
   const sftpEnabled = await hasSftpBackend(resolvedOrgKey);
   if (!sftpEnabled) {
-    throw new Error("SFTP ist nicht konfiguriert (Einstellungen → Integrationen).");
+    if (isProduction()) {
+      throw new Error("SFTP ist nicht konfiguriert (Einstellungen → Integrationen).");
+    }
+    const folderRel = getMoveDocumentsFolderRelativePath(customerNumber, moveNumber);
+    return listFilesLocal(resolvedOrgKey, folderRel);
   }
 
   const orgRootRemote = await getOrgRootRemote(resolvedOrgKey);
@@ -268,7 +412,8 @@ async function resolveAbsoluteDocumentPathForOrg(orgKey: string, relativePath: s
   const sftpEnabled = await hasSftpBackend(resolvedOrgKey);
 
   if (!sftpEnabled) {
-    return null;
+    if (isProduction()) return null;
+    return resolveAbsoluteLocalDocumentPathForOrg(resolvedOrgKey, sanitizedRelative);
   }
 
   const orgRootRemote = await getOrgRootRemote(resolvedOrgKey);
@@ -301,6 +446,11 @@ export async function readStoredDocumentFileForOrg(orgKey: string, relativePath:
   if (!resolved) return null;
 
   try {
+    if (resolved.backend === "local") {
+      const buffer = await fs.readFile(resolved.absolutePath);
+      return { buffer, fileName: path.basename(resolved.absolutePath), size: buffer.length };
+    }
+
     return await withSftpClientForOrg(orgKey, async (client) => {
       const exists = await client.exists(resolved.absolutePath);
       if (!exists) return null;
@@ -318,6 +468,17 @@ export async function deleteStoredDocumentFileForOrg(orgKey: string, relativePat
   if (!resolved) return { ok: false as const, status: 400 as const };
 
   try {
+    if (resolved.backend === "local") {
+      try {
+        await fs.unlink(resolved.absolutePath);
+        return { ok: true as const };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "";
+        const missing = message.includes("no such file") || message.includes("ENOENT");
+        return { ok: false as const, status: missing ? (404 as const) : (500 as const) };
+      }
+    }
+
     return await withSftpClientForOrg(orgKey, async (client) => {
       const exists = await client.exists(resolved.absolutePath);
       if (!exists) return { ok: false as const, status: 404 as const };
@@ -340,6 +501,12 @@ export async function renameStoredDocumentFileForOrg(orgKey: string, relativePat
   if (!nextResolved) return null;
 
   try {
+    if (resolved.backend === "local" && nextResolved.backend === "local") {
+      await ensureLocalDir(path.dirname(nextResolved.absolutePath));
+      await fs.rename(resolved.absolutePath, nextResolved.absolutePath);
+      return { relativePath: nextRelativePath, fileName: safeName };
+    }
+
     return await withSftpClientForOrg(orgKey, async (client) => {
       const exists = await client.exists(resolved.absolutePath);
       if (!exists) return null;
@@ -354,6 +521,16 @@ export async function renameStoredDocumentFileForOrg(orgKey: string, relativePat
 export async function writeStoredDocumentFileForOrg(orgKey: string, relativePath: string, buffer: Buffer) {
   const resolved = await resolveAbsoluteDocumentPathForOrg(orgKey, relativePath);
   if (!resolved) return false;
+
+  if (resolved.backend === "local") {
+    try {
+      await ensureLocalDir(path.dirname(resolved.absolutePath));
+      await fs.writeFile(resolved.absolutePath, buffer);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
   return withSftpClientForOrg(orgKey, async (client) => {
     await client.mkdir(path.posix.dirname(resolved.absolutePath), true);
@@ -379,7 +556,23 @@ export async function writeStoredDocumentFileUniqueForOrg(orgKey: string, folder
 
   const sftpEnabled = await hasSftpBackend(resolveOrgKey(orgKey));
   if (!sftpEnabled) {
-    throw new Error("SFTP ist nicht konfiguriert (Einstellungen → Integrationen).");
+    if (isProduction()) {
+      throw new Error("SFTP ist nicht konfiguriert (Einstellungen → Integrationen).");
+    }
+
+    const resolvedFolder = await resolveAbsoluteLocalDocumentPathForOrg(orgKey, normalizedFolderRelative);
+    if (!resolvedFolder) {
+      throw new Error("Dokumentpfad ist ungültig.");
+    }
+
+    await ensureLocalDir(resolvedFolder.absolutePath);
+    const entries = await fs.readdir(resolvedFolder.absolutePath, { withFileTypes: true });
+    const existingSet = new Set(entries.filter((entry) => entry.isFile()).map((entry) => entry.name));
+    const uniqueName = await pickUnique(existingSet);
+    const nextRelative = path.posix.join(normalizedFolderRelative, uniqueName);
+    const nextAbs = path.join(resolvedFolder.absolutePath, toPlatformPath(uniqueName));
+    await fs.writeFile(nextAbs, buffer);
+    return { relativePath: nextRelative, fileName: uniqueName };
   }
 
   const orgRootRemote = await getOrgRootRemote(orgKey);
